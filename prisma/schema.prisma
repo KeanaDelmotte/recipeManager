@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  emailVerified DateTime?
+  image String?
+  accounts Account[]
+  sessions Session[]
+  recipes Recipe[] @relation("Recipes")
+  favourites Recipe[] @relation("Favourites")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Recipe {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  title String
+  description String
+  servings Int
+  imageUrl String?
+  userId String
+  author User @relation("Recipes", fields: [userId], references: [id])
+  steps Step[]
+  recipeIngredients RecipeIngredient[]
+  favouritedBy User[] @relation("Favourites")
+  notes Note[]
+  cookTimeInMins Int
+  prepTimeInMins Int 
+  tags Tag[]
+}
+
+model Step {
+  id Int @id @default(autoincrement())
+  order Int
+  content String
+  recipeId Int
+  
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+}
+
+model Ingredient {
+  id Int @id @default(autoincrement())
+  name String
+  recipeIngredients RecipeIngredient[]
+}
+
+model RecipeIngredient {
+  id Int @id @default(autoincrement())
+  recipeId Int
+  ingredientId Int
+  quantity Int?
+  unit String?
+  note String?
+  group String?
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+}
+
+model Note {
+  id Int @id @default(autoincrement())
+  content String
+  recipeid Int
+
+  recipe Recipe @relation(fields: [recipeid], references: [id])
+}
+
+model Tag {
+  id Int @id @default(autoincrement())
+  title String
+  recipes Recipe[]
+}
+
+//AUTHENTICATION
+
+model Account {
+  id String @id @default(cuid())
+  userId String
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String?
+  access_token String?
+  expires_at String?
+  token_type Int?
+  scope String?
+  id_token String?
+  session_state String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id String @id @default(cuid())
+  sessionToken String @unique
+  userId String
+  expires DateTime
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token String
+  expires DateTime
+
+  @@unique([identifier, token])
+}
