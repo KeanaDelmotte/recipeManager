@@ -1,0 +1,26 @@
+.navbar {
+	background-color: var(--color-black);
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	padding: 2rem;
+}
+
+.user {
+	display: flex;
+	padding: 2rem;
+}
+
+.userImage {
+	size: 10rem;
+}
+
+.userMenu {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+	position: absolute;
+	z-index: 5;
+	background-color: var(--color-black);
+	border: 1px solid black;
+}
