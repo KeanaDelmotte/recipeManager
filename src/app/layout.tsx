@@ -3,7 +3,7 @@ import "./globals.css";
 // import styles from "./layout.module.css";
 import Navbar from "@/components/Navbar";
 import React from "react";
-import { auth } from "../auth";
+import { auth } from "../lib/auth";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",

@@ -33,17 +33,18 @@ model Recipe {
   id Int @id @default(autoincrement())
   createdAt DateTime @default(now())
   title String
-  description String
-  servings Int
+  description String?
+  servings Int?
   imageUrl String?
   userId String
-  author User @relation("Recipes", fields: [userId], references: [id])
+  author User @relation("Recipes", fields: [userId], references: [id], onDelete: Cascade)
   steps Step[]
-  recipeIngredients RecipeIngredient[]
+  ingredients RecipeIngredient[]
+  //for if in future want to make recipes sharable/public
   favouritedBy User[] @relation("Favourites")
   notes Note[]
-  cookTimeInMins Int
-  prepTimeInMins Int 
+  cookTimeInMins Int?
+  prepTimeInMins Int? 
   tags Tag[]
 }
 
@@ -53,7 +54,7 @@ model Step {
   content String
   recipeId Int
   
-  recipe Recipe @relation(fields: [recipeId], references: [id])
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 model Ingredient {
@@ -72,7 +73,7 @@ model RecipeIngredient {
   group String?
 
   ingredient Ingredient @relation(fields: [ingredientId], references: [id])
-  recipe Recipe @relation(fields: [recipeId], references: [id])
+  recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 model Note {
@@ -80,7 +81,7 @@ model Note {
   content String
   recipeid Int
 
-  recipe Recipe @relation(fields: [recipeid], references: [id])
+  recipe Recipe @relation(fields: [recipeid], references: [id], onDelete: Cascade)
 }
 
 model Tag {
