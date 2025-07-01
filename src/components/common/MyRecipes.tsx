@@ -1,5 +1,5 @@
 import { Recipe } from "@/generated/prisma";
-import { prisma } from "../lib/prisma";
+import { prisma } from "../../lib/prisma";
 import styles from "./MyRecipes.module.css";
 
 export default async function MyRecipes() {

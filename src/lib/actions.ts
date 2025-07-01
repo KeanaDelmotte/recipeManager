@@ -4,7 +4,7 @@ import { prisma } from "./prisma";
 import path from "path";
 import fs from "fs";
 import { NextResponse } from "next/server";
-import { InputIngredient } from "@/components/CreateRecipe";
+import { InputIngredient } from "@/components/common/CreateRecipe";
 
 export async function createRecipe(userId: string, formData: FormData) {
 	try {
@@ -71,7 +71,7 @@ export async function createRecipe(userId: string, formData: FormData) {
 					tags: { create: tags.map((tag) => ({ title: tag })) },
 				},
 			});
-      return {success: true}
+			return { success: true };
 		} else {
 			// return NextResponse.json({ success: false });
 			// return "Could not create recipe. Minimum fields not met.";

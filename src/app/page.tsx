@@ -1,7 +1,7 @@
 import styles from "./page.module.css";
 import { auth } from "../lib/auth";
-import MyRecipes from "@/components/MyRecipes";
-import CreateRecipe from "@/components/CreateRecipe";
+import MyRecipes from "@/components/common/MyRecipes";
+import CreateRecipe from "@/components/common/CreateRecipe";
 
 export default async function Home() {
 	const session = await auth();
@@ -13,7 +13,6 @@ export default async function Home() {
 				{user && (
 					<div>
 						<MyRecipes />
-						<h2>Create Recipe:</h2>
 						<CreateRecipe userId={user.id ?? ""} />
 					</div>
 				)}
