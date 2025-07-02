@@ -56,6 +56,7 @@ const schema = z.object({
 		),
 
 	title: z.string().min(1, "Title is required"),
+	description: z.string().optional(),
 	note: z.string().optional(),
 	tag: z.string().optional(),
 	step: z.string().optional(),
@@ -91,11 +92,64 @@ const schema = z.object({
 			val === undefined || val === "" ? undefined : Number(val)
 		),
 	groupUnit: z.string().optional(),
+	cookTimeMins: z
+		.string()
+		.optional()
+		.refine(
+			(val) =>
+				val === undefined ||
+				val === "" ||
+				(!isNaN(Number(val)) && Number(val) > 0),
+			"Cook time must be a number"
+		)
+		.transform((val) =>
+			val === undefined || val === "" ? undefined : Number(val)
+		),
+	cookTimeHours: z
+		.string()
+		.optional()
+		.refine(
+			(val) =>
+				val === undefined ||
+				val === "" ||
+				(!isNaN(Number(val)) && Number(val) > 0),
+			"Cook time must be a number"
+		)
+		.transform((val) =>
+			val === undefined || val === "" ? undefined : Number(val)
+		),
+	prepTimeMins: z
+		.string()
+		.optional()
+		.refine(
+			(val) =>
+				val === undefined ||
+				val === "" ||
+				(!isNaN(Number(val)) && Number(val) > 0),
+			"Prep time must be a number"
+		)
+		.transform((val) =>
+			val === undefined || val === "" ? undefined : Number(val)
+		),
+	prepTimeHours: z
+		.string()
+		.optional()
+		.refine(
+			(val) =>
+				val === undefined ||
+				val === "" ||
+				(!isNaN(Number(val)) && Number(val) > 0),
+			"Prep time must be a number"
+		)
+		.transform((val) =>
+			val === undefined || val === "" ? undefined : Number(val)
+		),
 });
 
 type FormData = {
 	servings: string;
 	title: string;
+	description: string;
 	note: string;
 	tag: string;
 	step: string;
@@ -106,6 +160,10 @@ type FormData = {
 	group: string;
 	groupQuantity: string;
 	groupUnit: string;
+	cookTimeMins: string;
+	cookTimeHours: string;
+	prepTimeMins: string;
+	prepTimeHours: string;
 };
 
 export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
@@ -122,6 +180,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 	const [form, setForm] = useState<FormData>({
 		servings: "1",
 		title: "",
+		description: "",
 		note: "",
 		step: "",
 		tag: "",
@@ -132,6 +191,10 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 		group: "",
 		groupQuantity: "",
 		groupUnit: "",
+		cookTimeHours: "",
+		cookTimeMins: "",
+		prepTimeHours: "",
+		prepTimeMins: "",
 	});
 	const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
 		{}
@@ -171,6 +234,34 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 			setTags([...tags, trimmed]);
 			setForm((prev) => ({ ...prev, tag: "" }));
 		}
+	};
+
+	const resetForm = () => {
+		setForm({
+			servings: "1",
+			title: "",
+			description: "",
+			note: "",
+			step: "",
+			tag: "",
+			quantity: "",
+			unit: "",
+			ingredient: "",
+			groupIngredient: "",
+			group: "",
+			groupQuantity: "",
+			groupUnit: "",
+			cookTimeHours: "",
+			cookTimeMins: "",
+			prepTimeHours: "",
+			prepTimeMins: "",
+		});
+
+		setIngredients([]);
+		setSteps([]);
+		setTags([]);
+		setNotes([]);
+		setErrors({});
 	};
 
 	const debouncedTimers = useRef<
@@ -261,7 +352,9 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 	return (
 		<Card className="w-full">
 			<CardHeader>
-				<CardTitle className="text-2xl">Create New Recipe</CardTitle>
+				<CardTitle className="text-2xl text-black_olive">
+					Create New Recipe
+				</CardTitle>
 			</CardHeader>
 			<CardContent>
 				<Form
@@ -277,6 +370,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 							type="text"
 							id="title"
 							onChange={handleChange("title")}
+							value={form.title}
 							onKeyDown={(e) => {
 								if (e.key == "Enter") {
 									e.preventDefault();
@@ -336,6 +430,8 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 									e.preventDefault();
 								}
 							}}
+							value={form.description}
+							onChange={handleChange("description")}
 						/>
 					</div>
 					<div>
@@ -354,6 +450,9 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 								variant="secondary"
 								type="button"
 								onClick={() => {
+									if (showRecipeGroupInput) {
+										setForm((prev) => ({ ...prev, group: "" }));
+									}
 									setShowRecipeGroupInput(!showRecipeGroupInput);
 								}}
 								className="mb-3"
@@ -432,7 +531,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 								<Textarea
 									id="step"
 									name="step"
-									placeholder={`Step ${steps.length + 1}`}
+									placeholder={`Describe step ${steps.length + 1}`}
 									value={form.step}
 									onChange={handleChange("step")}
 									onKeyDown={(e) => {
@@ -450,6 +549,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 									onClick={() => {
 										addStep();
 									}}
+									disabled={!form.step}
 								>
 									<FaPlus />
 								</Button>
@@ -492,8 +592,11 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 											e.preventDefault();
 										}
 									}}
+									onChange={handleChange("cookTimeHours")}
+									value={form.cookTimeHours}
 									placeholder="h"
 									className="w-12"
+									hasError={errors.cookTimeHours != undefined}
 								/>
 								<span>:</span>
 								<Input
@@ -503,10 +606,18 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 											e.preventDefault();
 										}
 									}}
+									value={form.cookTimeMins}
+									onChange={handleChange("cookTimeMins")}
 									placeholder="m"
 									className="w-12"
+									hasError={errors.cookTimeMins != undefined}
 								/>
 							</div>
+							{(errors.cookTimeHours || errors.cookTimeMins) && (
+								<p className="text-red-500">
+									{errors.cookTimeHours ?? errors.cookTimeMins}
+								</p>
+							)}
 						</div>
 					</div>
 					<div>
@@ -521,8 +632,11 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 											e.preventDefault();
 										}
 									}}
+									value={form.prepTimeHours}
+									onChange={handleChange("prepTimeHours")}
 									placeholder="h"
 									className="w-12"
+									hasError={errors.prepTimeHours != undefined}
 								/>
 								<span>:</span>
 								<Input
@@ -534,8 +648,16 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 									}}
 									placeholder="m"
 									className="w-12"
+									value={form.prepTimeMins}
+									onChange={handleChange("prepTimeMins")}
+									hasError={errors.prepTimeMins != undefined}
 								/>
 							</div>
+							{(errors.prepTimeHours || errors.prepTimeMins) && (
+								<p className="text-red-500">
+									{errors.prepTimeHours ?? errors.prepTimeMins}
+								</p>
+							)}
 						</div>
 					</div>
 					<div className="flex flex-col gap-3">
@@ -561,6 +683,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 								onClick={() => {
 									addNote();
 								}}
+								disabled={!form.note}
 							>
 								<FaPlus />
 							</Button>
@@ -612,6 +735,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 								onClick={() => {
 									addTag();
 								}}
+								disabled={!form.tag}
 							>
 								<FaPlus />
 							</Button>
@@ -661,7 +785,27 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 					}
 				}}
 			/> */}
-					<Button className="col-span-2 justify-self-center">Create</Button>
+					<div className="col-span-2 justify-self-center flex gap-3">
+						<Button
+							type="button"
+							variant="destructive"
+							onClick={() => {
+								resetForm();
+							}}
+						>
+							Discard
+						</Button>
+						<Button
+							disabled={
+								Object.values(errors).find((v) => v != undefined) != undefined
+									? true
+									: false
+							}
+						>
+							Create
+						</Button>
+					</div>
+
 					{formError && <p>{formError}</p>}
 				</Form>
 			</CardContent>
@@ -819,6 +963,11 @@ function IngredientInput({
 						onClick={() => {
 							addIngredient(group);
 						}}
+						disabled={
+							group
+								? form.groupIngredient == "" || form.group == ""
+								: form.ingredient == ""
+						}
 					>
 						<FaPlus />
 					</Button>
