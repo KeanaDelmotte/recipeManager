@@ -343,9 +343,10 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 		const result = await createRecipeForUser(formData);
 		if (result.success) {
 			setFormError("");
+			resetForm();
 			alert("Successfully created recipe!");
 		} else {
-			setFormError(`Could not create recipe. Message: ${result.message}`);
+			setFormError(result.message);
 		}
 	};
 
@@ -367,6 +368,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 					<div className="grid w-full max-w-sm items-center gap-3">
 						<Label htmlFor="title">Recipe Name *</Label>
 						<Input
+							name="title"
 							type="text"
 							id="title"
 							onChange={handleChange("title")}
@@ -425,6 +427,7 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 						<Input
 							type="text"
 							id="desc"
+							name="description"
 							onKeyDown={(e) => {
 								if (e.key == "Enter") {
 									e.preventDefault();

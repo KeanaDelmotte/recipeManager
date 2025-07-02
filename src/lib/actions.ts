@@ -71,17 +71,18 @@ export async function createRecipe(userId: string, formData: FormData) {
 					tags: { create: tags.map((tag) => ({ title: tag })) },
 				},
 			});
-			return { success: true };
+			return { success: true, message: "Successfully created recipe!" };
 		} else {
-			// return NextResponse.json({ success: false });
-			// return "Could not create recipe. Minimum fields not met.";
 			return {
 				success: false,
 				message: "Could not create recipe. Minimum fields not met.",
 			};
 		}
 	} catch (error) {
-		return { success: false, message: error.message };
+		if (error instanceof Error) {
+			return { success: false, message: error.message };
+		}
+		return { success: false, message: "Could not create recipe." };
 	}
 }
 
