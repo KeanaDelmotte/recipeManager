@@ -1,11 +1,14 @@
 import styles from "./page.module.css";
 import { auth } from "../lib/auth";
 import MyRecipes from "@/components/common/MyRecipes";
-import CreateRecipe from "@/components/common/CreateRecipe";
+import { FaPlus } from "react-icons/fa6";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function Home() {
 	const session = await auth();
 	const user = session?.user;
+
 	return (
 		<div className={styles.page}>
 			<main className={styles.main}>
@@ -13,7 +16,12 @@ export default async function Home() {
 				{user && (
 					<div>
 						<MyRecipes />
-						<CreateRecipe userId={user.id ?? ""} />
+						<Button asChild>
+							<Link href="/createrecipe">
+								<FaPlus />
+								Add Recipe
+							</Link>
+						</Button>
 					</div>
 				)}
 			</main>

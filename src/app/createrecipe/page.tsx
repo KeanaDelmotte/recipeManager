@@ -3,7 +3,6 @@ import { createRecipe } from "@/lib/actions";
 import Form from "next/form";
 import { useState, useRef, SetStateAction } from "react";
 import { z } from "zod";
-
 import { Button } from "@/components/ui/button";
 import {
 	FaAngleUp,
@@ -12,10 +11,9 @@ import {
 	FaRegTrashCan,
 	FaXmark,
 } from "react-icons/fa6";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Textarea } from "../ui/textarea";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
 
 interface CreateUserRecipeProps {
 	userId: string;
@@ -351,19 +349,17 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 	};
 
 	return (
-		<Card className="w-full">
-			<CardHeader>
-				<CardTitle className="text-2xl text-black_olive">
+		<div className="flex flex-col items-center">
+			<div className="w-200 mt-10 mb-10">
+				<h1 className="text-3xl font-bold mb-10 self-start">
 					Create New Recipe
-				</CardTitle>
-			</CardHeader>
-			<CardContent>
+				</h1>
 				<Form
 					onSubmit={validateBeforeSubmit}
 					action={(formData) => {
 						sendToServer(formData);
 					}}
-					className="grid w-full space-y-6 grid-cols-2 gap-4 "
+					className="grid w-full space-y-6 grid-cols-2 gap-4"
 				>
 					<div className="grid w-full max-w-sm items-center gap-3">
 						<Label htmlFor="title">Recipe Name *</Label>
@@ -811,8 +807,8 @@ export default function CreateRecipe({ userId }: CreateUserRecipeProps) {
 
 					{formError && <p>{formError}</p>}
 				</Form>
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }
 

@@ -4,7 +4,7 @@ import { prisma } from "./prisma";
 import path from "path";
 import fs from "fs";
 import { NextResponse } from "next/server";
-import { InputIngredient } from "@/components/common/CreateRecipe";
+import { InputIngredient } from "@/app/createrecipe/page";
 
 export async function createRecipe(userId: string, formData: FormData) {
 	try {
