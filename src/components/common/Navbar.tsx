@@ -5,6 +5,8 @@ import Image from "next/image";
 import styles from "./Navbar.module.css";
 import React, { useState, useEffect, useRef } from "react";
 import { FaUser } from "react-icons/fa6";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface NavbarProps {
 	user: User | undefined;
@@ -32,7 +34,9 @@ export default function Navbar({ user }: NavbarProps) {
 	}, [showMenu]);
 	return (
 		<div className={styles.navbar}>
-			<p className={styles.title}>Recipe Manager</p>
+			<Link href="/" className={cn(styles.title, "text-white")}>
+				Recipe Manager
+			</Link>
 
 			<div className={styles.options}>
 				{user && (
@@ -40,12 +44,12 @@ export default function Navbar({ user }: NavbarProps) {
 						<Image
 							src={user.image ?? "public/default-user.svg"}
 							alt="user image"
-							className={styles.userImage}
+							className={cn(styles.userImage, "rounded-2xl")}
 							width={30}
 							height={30}
 							onClick={() => setShowMenu(true)}
 						/>
-						<p>{`Welcome, ${user.name}`}</p>
+						<p className="text-white ml-3">{`Welcome, ${user.name}`}</p>
 					</div>
 				)}
 				{!user && (
