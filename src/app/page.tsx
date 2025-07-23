@@ -1,3 +1,4 @@
+"use server";
 import styles from "./page.module.css";
 import { auth } from "../lib/auth";
 import MyRecipes from "@/components/common/MyRecipes";
@@ -12,7 +13,14 @@ export default async function Home() {
 	return (
 		<div className={styles.page}>
 			<main className={styles.main}>
-				{!user && <p>{"Looks like you're not signed in"}</p>}
+				{!user && (
+					<div className="flex flex-col gap-3 items-center">
+						<p>{"Looks like you're not signed in"}</p>
+						<Button>
+							<Link href="/api/auth/signin">Sign In</Link>
+						</Button>
+					</div>
+				)}
 				{user && (
 					<div>
 						<MyRecipes />

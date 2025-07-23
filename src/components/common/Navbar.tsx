@@ -54,7 +54,7 @@ export default function Navbar({ user }: NavbarProps) {
 				)}
 				{!user && (
 					<FaUser
-						className={styles.userImage}
+						className="text-white cursor-pointer"
 						onClick={() => setShowMenu(true)}
 					/>
 				)}
@@ -85,6 +85,7 @@ function UserMenu({ user, ref, dismiss }: UserMenuProps) {
 						await signOut();
 						dismiss();
 					}}
+          className="text-white cursor-pointer"
 				>
 					Sign Out
 				</button>
@@ -95,6 +96,7 @@ function UserMenu({ user, ref, dismiss }: UserMenuProps) {
 						await signIn();
 						dismiss();
 					}}
+          className="text-white cursor-pointer"
 				>
 					Sign In
 				</button>
