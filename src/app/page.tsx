@@ -25,7 +25,7 @@ export default async function Home() {
 				{user && (
 					<div className="w-full flex flex-col gap-4">
 						<MyRecipes />
-						<Button asChild className="w-fit">
+						<Button asChild className="w-fit z-10 fixed right-5 bottom-5">
 							<Link href="/createrecipe">
 								<FaPlus />
 								Add Recipe
