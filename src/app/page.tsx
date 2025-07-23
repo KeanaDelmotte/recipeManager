@@ -5,26 +5,27 @@ import MyRecipes from "@/components/common/MyRecipes";
 import { FaPlus } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export default async function Home() {
 	const session = await auth();
 	const user = session?.user;
 
 	return (
-		<div className={styles.page}>
-			<main className={styles.main}>
+		<div className={cn("!gap-0", styles.page)}>
+			<main className={cn(styles.main, "w-full")}>
 				{!user && (
 					<div className="flex flex-col gap-3 items-center">
 						<p>{"Looks like you're not signed in"}</p>
-						<Button>
+						<Button asChild>
 							<Link href="/api/auth/signin">Sign In</Link>
 						</Button>
 					</div>
 				)}
 				{user && (
-					<div>
+					<div className="w-full flex flex-col gap-4">
 						<MyRecipes />
-						<Button asChild>
+						<Button asChild className="w-fit">
 							<Link href="/createrecipe">
 								<FaPlus />
 								Add Recipe
