@@ -4,33 +4,32 @@ import { prisma } from "./prisma";
 import path from "path";
 import fs from "fs";
 import { NextResponse } from "next/server";
-import { InputIngredient } from "@/app/createrecipe/page";
+import { InputIngredient } from "@/components/common/CreateRecipe";
 
 export async function createRecipe(userId: string, formData: FormData) {
 	try {
 		const title = formData.get("title")?.toString();
 		const description = formData.get("description")?.toString();
-		const servings = parseInt(formData.get("servings")?.toString() ?? "");
+		const servings = parseFloat(formData.get("servings")?.toString() ?? "");
 		const imageUrl = formData.get("file")?.toString();
-		const steps = formData.get("steps")?.toString().split(",") ?? [];
+		const steps = JSON.parse(
+			formData.get("steps")?.toString() ?? ""
+		) as string[];
 		const ingredients = JSON.parse(
-			formData.get("ingredients")?.toString() ??
-				"{id: 1, ingredient: 'test', qunatity: 1, unit: 'cup'}"
+			formData.get("ingredients")?.toString() ?? ""
 		) as InputIngredient[];
-		const notes = formData.get("notes")?.toString().split(",") ?? [];
-		const cookTimeHours = parseInt(
-			formData.get("cookTimeHours")?.toString() ?? "0"
-		);
-		const cookTimeMins = parseInt(
-			formData.get("cookTimeMins")?.toString() ?? "0"
-		);
-		const prepTimeHours = parseInt(
-			formData.get("prepTimeHours")?.toString() ?? "0"
-		);
-		const prepTimeMins = parseInt(
-			formData.get("prepTimeMins")?.toString() ?? "0"
-		);
-		const tags = formData.get("tags")?.toString().split(",") ?? [];
+		const notes = JSON.parse(
+			formData.get("notes")?.toString() ?? ""
+		) as string[];
+		const cookTimeHours =
+			Number(formData.get("cookTimeHours")?.toString() ?? "0") ;
+		const cookTimeMins =
+			Number(formData.get("cookTimeMins")?.toString() ?? "0") ?? 0;
+		const prepTimeHours =
+			Number(formData.get("prepTimeHours")?.toString() ?? "0") ?? 0;
+		const prepTimeMins =
+			Number(formData.get("prepTimeMins")?.toString() ?? "0") ?? 0;
+		const tags = JSON.parse(formData.get("tags")?.toString() ?? "") as string[];
 
 		const totalCookTime = cookTimeHours * 60 + cookTimeMins;
 		const totalPrepTime = prepTimeHours * 60 + prepTimeMins;
@@ -46,7 +45,7 @@ export async function createRecipe(userId: string, formData: FormData) {
 					ingredients: {
 						create: ingredients.map((ingredient) => ({
 							ingredient: { create: { name: ingredient.ingredient } },
-							quantity: parseInt(ingredient.quantity),
+							quantity: parseFloat(ingredient.quantity),
 							unit: ingredient.unit,
 							group: ingredient.group,
 						})),
