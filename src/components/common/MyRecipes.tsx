@@ -18,6 +18,7 @@ export default async function MyRecipes() {
 				{recipes.map((recipe) => (
 					<RecipeCard
 						key={recipe.id}
+						id={recipe.id}
 						title={recipe.title}
 						description={recipe.description ?? ""}
 						imageURL={recipe.imageUrl ?? ""}

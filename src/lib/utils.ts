@@ -5,22 +5,17 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export function recipeTimeToReadable(
-	prepTime: number | null,
-	cookTime: number | null
-) : string {
-	let totalTimeInMins = 0;
 
-	if (prepTime) {
-		totalTimeInMins += prepTime;
-	}
-	if (cookTime) {
-		totalTimeInMins += cookTime;
-	}
-
-	const hours = Math.floor(totalTimeInMins);
-	const minutes = totalTimeInMins % 60;
+/**
+ * Converts a time duration from minutes to a human-readable string in "H:MM" format.
+ *
+ * @param timeInMinutes - The total time in minutes to convert.
+ * @returns A string representing the time in hours and minutes, zero-padded for minutes (e.g., "2:05").
+ */
+export function timeInMinutesToReadable(timeInMinutes: number): string {
+  const minutes = timeInMinutes % 60;
+	const hours = Math.floor((timeInMinutes - minutes) / 60);
 	const paddedMins = minutes.toString().padStart(2, "0");
 
-	return `${hours} : ${paddedMins}`;
+	return `${hours}:${paddedMins}`;
 }

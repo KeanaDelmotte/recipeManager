@@ -1,10 +1,12 @@
 import { Card, CardContent } from "../ui/card";
 import Image from "next/image";
-import { FaClock, FaImage, FaPen } from "react-icons/fa6";
-import { recipeTimeToReadable } from "@/lib/utils";
+import { FaClock, FaImage, FaPen, FaBookOpen } from "react-icons/fa6";
+import {timeInMinutesToReadable } from "@/lib/utils";
 import { Button } from "../ui/button";
+import Link from "next/link";
 
 interface RecipeCardProps {
+	id: number;
 	imageURL: string;
 	title: string;
 	description: string;
@@ -20,6 +22,7 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({
+	id,
 	imageURL,
 	title,
 	description,
@@ -33,12 +36,7 @@ export default function RecipeCard({
 			{/* Image Section */}
 			<div className="relative w-full h-28 bg-gray-100 flex items-center justify-center flex-shrink-0">
 				{imageURL ? (
-					<Image
-						src={imageURL}
-						alt={title}
-						fill
-						className="object-cover"
-					/>
+					<Image src={imageURL} alt={title} fill className="object-cover" />
 				) : (
 					<FaImage className="text-gray-400" size={48} />
 				)}
@@ -49,17 +47,17 @@ export default function RecipeCard({
 				{/* Header Section */}
 				<div className="flex justify-between gap-2 mb-2">
 					<div className="flex-grow min-w-0">
-						<h3 className="font-semibold text-lg leading-tight truncate">{title}</h3>
-						<p className="text-gray-500 text-sm line-clamp-1">
-							{description}
-						</p>
+						<h3 className="font-semibold text-lg leading-tight truncate">
+							{title}
+						</h3>
+						<p className="text-gray-500 text-sm line-clamp-1">{description}</p>
 					</div>
 					<div className="flex-shrink-0 text-right text-sm">
 						<p className="whitespace-nowrap">{`Serves ${servings}`}</p>
 						<p className="flex items-center gap-1 justify-end">
 							<FaClock size={12} />
 							<span className="whitespace-nowrap">
-								{recipeTimeToReadable(prepTimeInMins, cookTimeInMins)}
+								{timeInMinutesToReadable(prepTimeInMins+cookTimeInMins)}
 							</span>
 						</p>
 					</div>
@@ -71,7 +69,10 @@ export default function RecipeCard({
 					<div className="overflow-hidden">
 						<ul className="space-y-1">
 							{ingredients.map((ingredient) => (
-								<li key={ingredient.id} className="text-xs leading-tight truncate">
+								<li
+									key={ingredient.id}
+									className="text-xs leading-tight truncate"
+								>
 									<span className="text-gray-400">
 										{ingredient.quantity} {ingredient.unit}
 									</span>{" "}
@@ -93,8 +94,11 @@ export default function RecipeCard({
 						<FaPen className="mr-1" size={12} />
 						Edit
 					</Button>
-					<Button size="sm" className="flex-1">
-						View
+					<Button size="sm" className="flex-1" asChild>
+						<Link href={`/recipes/${id}`}>
+							<FaBookOpen className="mr-1" size={12} />
+							View
+						</Link>
 					</Button>
 				</div>
 			</CardContent>

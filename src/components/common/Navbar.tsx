@@ -34,17 +34,18 @@ export default function Navbar({ user }: NavbarProps) {
 	}, [showMenu]);
 	return (
 		<div className={styles.navbar}>
+      {/* Right Side - Home Link */}
 			<Link href="/" className={cn(styles.title, "text-white")}>
 				Recipe Manager
 			</Link>
-
+      {/* Left Side - Login/User */}
 			<div className={styles.options}>
 				{user && (
 					<div className={styles.user}>
 						<Image
 							src={user.image ?? "public/default-user.svg"}
 							alt="user image"
-							className={cn(styles.userImage, "rounded-2xl")}
+							className={cn(styles.userImage, "rounded-2xl cursor-pointer")}
 							width={30}
 							height={30}
 							onClick={() => setShowMenu(true)}
