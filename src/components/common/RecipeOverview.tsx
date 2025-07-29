@@ -161,14 +161,12 @@ export default function RecipeOverview({
 							<ul className="space-y-3">
 								{ingredients.map((ingredient) => (
 									<li key={ingredient.id} className="flex flex-col gap-1">
-										<div className="flex items-start gap-1">
-											<span className="font-medium text-gray-500">
+										<p className="font-medium">
+											<span className="text-gray-500 w-fit pr-1">
 												{ingredient.quantity} {ingredient.unit}
 											</span>
-											<span className="font-medium">
-												{ingredient.ingredient.name}
-											</span>
-										</div>
+											{ingredient.ingredient.name}
+										</p>
 									</li>
 								))}
 							</ul>

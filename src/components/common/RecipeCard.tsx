@@ -94,7 +94,7 @@ export default function RecipeCard({
 						<FaPen className="mr-1" size={12} />
 						Edit
 					</Button>
-					<Button size="sm" className="flex-1" asChild>
+					<Button size="sm" className="flex-1" variant="secondary" asChild>
 						<Link href={`/recipes/${id}`}>
 							<FaBookOpen className="mr-1" size={12} />
 							View
