@@ -25,7 +25,7 @@ const buttonVariants = cva(
 					hoverEffect +
 					activeEffect,
 				ghost:
-					"hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer",
+					"hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 cursor-pointer hover:scale-103 transition-all duration-200",
 				link: "text-primary underline-offset-4 hover:underline ",
 			},
 			size: {
