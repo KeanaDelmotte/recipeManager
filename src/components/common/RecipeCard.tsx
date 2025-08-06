@@ -1,10 +1,10 @@
 import { Card, CardContent } from "../ui/card";
 import Image from "next/image";
 import { FaClock, FaImage, FaPen, FaBookOpen } from "react-icons/fa6";
-import {timeInMinutesToReadable } from "@/lib/utils";
+import { cn, timeInMinutesToReadable } from "@/lib/utils";
 import { Button } from "../ui/button";
 import Link from "next/link";
-
+import Styles from "./MyRecipes.module.css";
 interface RecipeCardProps {
 	id: number;
 	imageURL: string;
@@ -32,7 +32,12 @@ export default function RecipeCard({
 	ingredients,
 }: RecipeCardProps) {
 	return (
-		<Card className="flex flex-col h-80 w-72 overflow-hidden gap-0 py-0">
+		<Card
+			className={cn(
+				"flex flex-col h-80 w-72 overflow-hidden gap-0 py-0",
+				Styles.recipe
+			)}
+		>
 			{/* Image Section */}
 			<div className="relative w-full h-28 bg-gray-100 flex items-center justify-center flex-shrink-0">
 				{imageURL ? (
@@ -57,7 +62,7 @@ export default function RecipeCard({
 						<p className="flex items-center gap-1 justify-end">
 							<FaClock size={12} />
 							<span className="whitespace-nowrap">
-								{timeInMinutesToReadable(prepTimeInMins+cookTimeInMins)}
+								{timeInMinutesToReadable(prepTimeInMins + cookTimeInMins)}
 							</span>
 						</p>
 					</div>

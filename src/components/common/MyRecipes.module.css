@@ -1,0 +1,44 @@
+.myRecipes {
+	--x: 4;
+	--grid-gap: calc((100% - var(--x) * 288px) / (var(--x) - 1));
+	gap: var(--grid-gap);
+}
+
+.recipe {
+	margin-bottom: calc(var(--grid-gap));
+}
+
+@media (max-width: 1400px) {
+	.myRecipes {
+		--x: 3;
+	}
+}
+
+@media (max-width: 1060px) {
+	.myRecipes {
+		--x: 2;
+	}
+}
+
+@media (max-width: 750px) {
+	.myRecipes {
+		--x: 1;
+    justify-content: center;
+	}
+
+  .recipe {
+	margin-bottom: 20px;
+}
+}
+
+@media (min-width: 1700px) {
+	.myRecipes {
+		--x: 5;
+	}
+}
+
+@media (min-width: 2000px) {
+	.myRecipes {
+		--x: 6;
+	}
+}

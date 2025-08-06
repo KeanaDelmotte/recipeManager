@@ -21,8 +21,9 @@ export async function createRecipe(userId: string, formData: FormData) {
 		const notes = JSON.parse(
 			formData.get("notes")?.toString() ?? ""
 		) as string[];
-		const cookTimeHours =
-			Number(formData.get("cookTimeHours")?.toString() ?? "0") ;
+		const cookTimeHours = Number(
+			formData.get("cookTimeHours")?.toString() ?? "0"
+		);
 		const cookTimeMins =
 			Number(formData.get("cookTimeMins")?.toString() ?? "0") ?? 0;
 		const prepTimeHours =
@@ -109,3 +110,4 @@ export async function upload(formData: FormData) {
 		return NextResponse.json({ success: false, message: e });
 	}
 }
+

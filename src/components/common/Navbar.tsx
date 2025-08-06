@@ -31,7 +31,7 @@ export default function Navbar({ user }: NavbarProps) {
 		};
 	}, [showMenu]);
 	return (
-		<div className="sticky top-0 z-10 bg-black flex flex-row justify-between p-2">
+		<div className="sticky top-0 z-10 bg-black flex flex-row justify-between p-5">
 			{/* Right Side - Home Link */}
 			<Link href="/" className="text-white text-2xl">
 				Recipe Manager
