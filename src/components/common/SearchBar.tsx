@@ -3,13 +3,21 @@ import { FaMagnifyingGlass, FaX } from "react-icons/fa6";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-interface SearchbarProps {
-	onSearch: (queryStr: string) => void;
-}
-
-export default function Searchbar({ onSearch }: SearchbarProps) {
+export default function Searchbar() {
 	const [searchQ, setSearchQ] = useState("");
+	const router = useRouter();
+
+	function onSearch(searchStr: string) {
+		const params = new URLSearchParams(window.location.search);
+		if (searchStr) {
+			params.set("search", searchStr);
+		} else {
+			params.delete("search");
+		}
+		router.push(`/?${params.toString()}`);
+	}
 
 	return (
 		<div className="grid grid-cols-[repeat(fit-content)] grid-rows-1 h-fit gap-3">
@@ -48,42 +56,4 @@ export default function Searchbar({ onSearch }: SearchbarProps) {
 			)}
 		</div>
 	);
-}
-
-{
-	/* <div className="flex flex-row gap-5">
-			<Input
-				placeholder="Recipe Name"
-				onChange={(e) => setSearchQ(e.target.value)}
-				onKeyDown={(key) => {
-					if (key.key == "Enter") {
-						onSearch(searchQ);
-					}
-				}}
-			/>
-			<div className="flex flex-row gap-5">
-				<Button
-					type="button"
-					variant="ghost"
-					onClick={() => {
-						onSearch(searchQ);
-					}}
-					className="cursor-pointer"
-				>
-					<FaMagnifyingGlass />
-				</Button>
-				{searchQ.trim().length > 0 && (
-					<Button
-						type="button"
-						variant="ghost"
-						onClick={() => {
-							setSearchQ("");
-						}}
-						className="cursor-pointer"
-					>
-						<FaX />
-					</Button>
-				)}
-			</div>
-		</div> */
 }

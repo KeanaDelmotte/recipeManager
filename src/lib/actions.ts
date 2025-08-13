@@ -5,6 +5,8 @@ import path from "path";
 import fs from "fs";
 import { NextResponse } from "next/server";
 import { InputIngredient } from "@/components/common/CreateRecipe";
+import { auth } from "./auth";
+import { isPrismaError } from "./utils";
 
 export async function createRecipe(userId: string, formData: FormData) {
 	try {
@@ -111,3 +113,71 @@ export async function upload(formData: FormData) {
 	}
 }
 
+export async function deleteRecipe(id: number) {
+	try {
+		const session = await auth();
+		const user = session?.user;
+
+		//Check if recipe belongs to user
+		if (!user) {
+			return { error: "Unauthorized", status: 401 };
+		}
+
+		//Check if recipe id is valid
+		if (isNaN(id)) {
+			return { error: "Invalid recipe ID", status: 400 };
+		}
+
+		//Delete
+		const deletedRecipe = await prisma.recipe.delete({
+			where: { id: id },
+		});
+
+		return {
+			message: "Successfully deleted recipe",
+			deletedRecipe,
+			status: 200,
+		};
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	} catch (error: any) {
+		// Prisma record not found
+		if (isPrismaError(error) && error.code === "P2025") {
+			return { error: "Recipe not found", status: 404 };
+		}
+		if (error instanceof Error) {
+			return {
+				error: `Failed to delete recipe: ${error.message}`,
+				status: 500,
+			};
+		}
+		return { error: "Failed to delete recipe" };
+	}
+}
+
+export async function getRecipes(filter: string) {
+	try {
+		const filteredRecipes = await prisma.recipe.findMany({
+			where: {
+				title: {
+					contains: filter,
+				},
+			},
+			include: {
+				ingredients: {
+					include: {
+						ingredient: true,
+					},
+				},
+			},
+		});
+		return NextResponse.json({ success: true, recipes: filteredRecipes });
+	} catch (error) {
+		if (error instanceof Error) {
+			return NextResponse.json({ success: false, message: error.message });
+		}
+		return NextResponse.json({
+			success: false,
+			message: "Could not fetch recipes",
+		});
+	}
+}

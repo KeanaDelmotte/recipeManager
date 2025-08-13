@@ -1,10 +1,14 @@
+"use client";
 import { Card, CardContent } from "../ui/card";
 import Image from "next/image";
-import { FaClock, FaImage, FaPen, FaBookOpen } from "react-icons/fa6";
+import { FaClock, FaImage, FaPen, FaBookOpen, FaTrash } from "react-icons/fa6";
 import { cn, timeInMinutesToReadable } from "@/lib/utils";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import Styles from "./MyRecipes.module.css";
+import { useState } from "react";
+import { deleteRecipe } from "@/lib/actions";
+import { useRouter } from "next/navigation";
 interface RecipeCardProps {
 	id: number;
 	imageURL: string;
@@ -31,10 +35,12 @@ export default function RecipeCard({
 	cookTimeInMins,
 	ingredients,
 }: RecipeCardProps) {
+	const [showPopup, setShowPopup] = useState(false);
+	const router = useRouter();
 	return (
 		<Card
 			className={cn(
-				"flex flex-col h-80 w-72 overflow-hidden gap-0 py-0",
+				"flex flex-col h-80 w-72 overflow-hidden gap-0 py-0 relative",
 				Styles.recipe
 			)}
 		>
@@ -45,6 +51,16 @@ export default function RecipeCard({
 				) : (
 					<FaImage className="text-gray-400" size={48} />
 				)}
+				<Button
+					type="button"
+					variant="ghost"
+					className="absolute top-2 right-2 z-10"
+					onClick={() => {
+						setShowPopup(true);
+					}}
+				>
+					<FaTrash className="text-gray-700" />
+				</Button>
 			</div>
 
 			{/* Content Section */}
@@ -106,6 +122,37 @@ export default function RecipeCard({
 						</Link>
 					</Button>
 				</div>
+				{/* Popup */}
+				{showPopup && (
+					<div className="flex flex-col gap-5 bg-gray-200 z-10 w-full h-full items-center absolute top-0 left-0 p-3 justify-center">
+						<p>Are you sure you want to delete this recipe?</p>
+						<div className="flex flex-row gap-3">
+							<Button
+								type="button"
+								variant="secondary"
+								className="cursor-pointer"
+								onClick={() => {
+									setShowPopup(false);
+								}}
+							>
+								Cancel
+							</Button>
+							<Button
+								type="button"
+								variant="destructive"
+								className="cursor-pointer"
+								onClick={async () => {
+									const result = await deleteRecipe(id);
+									if (result.status == 200) {
+										router.refresh();
+									}
+								}}
+							>
+								Delete
+							</Button>
+						</div>
+					</div>
+				)}
 			</CardContent>
 		</Card>
 	);

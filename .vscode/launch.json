@@ -10,7 +10,9 @@
       "request": "launch",
       "name": "Launch Chrome against localhost",
       "url": "http://localhost:3000",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}",
+      "userDataDir": false,
+      "runtimeArgs": ["--remote-debugging-port=9222"]
     }
   ]
 }
