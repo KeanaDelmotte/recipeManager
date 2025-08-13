@@ -8,7 +8,7 @@
 
 	display: grid;
 	grid-template-rows: 20px 1fr 20px;
-	align-items: center;
+	align-items: top;
 	justify-items: center;
 	min-height: 100svh;
 	padding-left: 80px;
