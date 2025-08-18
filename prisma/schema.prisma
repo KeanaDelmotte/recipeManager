@@ -58,21 +58,20 @@ model Step {
 }
 
 model Ingredient {
-  id Int @id @default(autoincrement())
-  name String
+  name String @id
   recipeIngredients RecipeIngredient[]
 }
 
 model RecipeIngredient {
   id Int @id @default(autoincrement())
   recipeId Int
-  ingredientId Int
+  name String
   quantity Int?
   unit String?
   note String?
   group String?
 
-  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredient Ingredient @relation(fields: [name], references: [name])
   recipe Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
@@ -85,8 +84,7 @@ model Note {
 }
 
 model Tag {
-  id Int @id @default(autoincrement())
-  title String
+  title String @id
   recipes Recipe[]
 }
 
