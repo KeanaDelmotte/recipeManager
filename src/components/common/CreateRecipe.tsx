@@ -1,8 +1,14 @@
 "use client";
 
-import { createRecipe } from "@/lib/actions";
+import { createRecipe, update } from "@/lib/actions";
 import Form from "next/form";
-import { useState, useRef, SetStateAction } from "react";
+import {
+	useState,
+	useRef,
+	SetStateAction,
+	useEffect,
+	useCallback,
+} from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +22,11 @@ import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
 import { redirect } from "next/navigation";
+import { FullRecipe } from "@/lib/types";
+import {
+	RecipeIngredientsToInputIngredients,
+	TimeInMinutesToHoursAndMinutes,
+} from "@/lib/utils";
 
 export interface InputIngredient {
 	id: string;
@@ -34,6 +45,31 @@ function useIdGenerator() {
 	}
 
 	return getNextIngId;
+}
+
+//If only editing a recipe, then set form data to existing recipe data
+function setFormDataToRecipe(
+	setForm: React.Dispatch<SetStateAction<FormData>>,
+	recipe: FullRecipe
+) {
+	//seperate time into hours and minutes for seperate inputs
+	const cookTimeHoursAndMinutes = TimeInMinutesToHoursAndMinutes(
+		recipe.cookTimeInMins ?? 0
+	);
+	const prepTimeHoursAndMinutes = TimeInMinutesToHoursAndMinutes(
+		recipe.prepTimeInMins ?? 0
+	);
+
+	setForm((f) => ({
+		...f,
+		title: recipe.title,
+		description: recipe.description ?? "",
+		servings: `${recipe.servings ?? 1}`,
+		cookTimeHours: `${cookTimeHoursAndMinutes.hours}`,
+		cookTimeMins: `${cookTimeHoursAndMinutes.minutes}`,
+		prepTimeHours: `${prepTimeHoursAndMinutes.hours}`,
+		prepTimeMins: `${prepTimeHoursAndMinutes.minutes}`,
+	}));
 }
 
 const schema = z.object({
@@ -65,7 +101,7 @@ const schema = z.object({
 				val === undefined ||
 				val === "" ||
 				(!isNaN(Number(val)) && Number(val) > 0),
-			"Quantity must be a number > 0"
+			"Quantity must be a number greater than 0"
 		)
 		.transform((val) =>
 			val === undefined || val === "" ? undefined : Number(val)
@@ -82,7 +118,7 @@ const schema = z.object({
 				val === undefined ||
 				val === "" ||
 				(!isNaN(Number(val)) && Number(val) > 0),
-			"Quantity must be a number"
+			"Quantity must be a number greater than 0"
 		)
 		.transform((val) =>
 			val === undefined || val === "" ? undefined : Number(val)
@@ -92,10 +128,7 @@ const schema = z.object({
 		.string()
 		.optional()
 		.refine(
-			(val) =>
-				val === undefined ||
-				val === "" ||
-				(!isNaN(Number(val)) && Number(val) > 0),
+			(val) => val === undefined || val === "" || !isNaN(Number(val)),
 			"Cook time must be a number"
 		)
 		.transform((val) =>
@@ -105,10 +138,7 @@ const schema = z.object({
 		.string()
 		.optional()
 		.refine(
-			(val) =>
-				val === undefined ||
-				val === "" ||
-				(!isNaN(Number(val)) && Number(val) > 0),
+			(val) => val === undefined || val === "" || !isNaN(Number(val)),
 			"Cook time must be a number"
 		)
 		.transform((val) =>
@@ -118,10 +148,7 @@ const schema = z.object({
 		.string()
 		.optional()
 		.refine(
-			(val) =>
-				val === undefined ||
-				val === "" ||
-				(!isNaN(Number(val)) && Number(val) > 0),
+			(val) => val === undefined || val === "" || !isNaN(Number(val)),
 			"Prep time must be a number"
 		)
 		.transform((val) =>
@@ -131,10 +158,7 @@ const schema = z.object({
 		.string()
 		.optional()
 		.refine(
-			(val) =>
-				val === undefined ||
-				val === "" ||
-				(!isNaN(Number(val)) && Number(val) > 0),
+			(val) => val === undefined || val === "" || !isNaN(Number(val)),
 			"Prep time must be a number"
 		)
 		.transform((val) =>
@@ -164,18 +188,31 @@ type FormData = {
 
 interface CreateRecipeProps {
 	userId: string;
+	editRecipe?: FullRecipe;
 }
 
-export default function CreateRecipe({ userId }: CreateRecipeProps) {
+export default function CreateRecipe({
+	userId,
+	editRecipe,
+}: CreateRecipeProps) {
 	const createRecipeForUser = createRecipe.bind(null, userId);
+	const updateRecipe = update.bind(null, userId);
 
 	const [showRecipeGroupInput, setShowRecipeGroupInput] = useState(false);
 	const [formError, setFormError] = useState("");
 
-	const [ingredients, setIngredients] = useState<InputIngredient[]>([]);
-	const [steps, setSteps] = useState<string[]>([]);
-	const [notes, setNotes] = useState<string[]>([]);
-	const [tags, setTags] = useState<string[]>([]);
+	const [ingredients, setIngredients] = useState<InputIngredient[]>(
+		RecipeIngredientsToInputIngredients(editRecipe?.ingredients ?? [])
+	);
+	const [steps, setSteps] = useState<string[]>(
+		editRecipe?.steps.map((step) => step.content) ?? []
+	);
+	const [notes, setNotes] = useState<string[]>(
+		editRecipe?.notes.map((note) => note.content) ?? []
+	);
+	const [tags, setTags] = useState<string[]>(
+		editRecipe?.tags.map((tag) => tag.title) ?? []
+	);
 
 	const [form, setForm] = useState<FormData>({
 		servings: "1",
@@ -196,11 +233,19 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 		prepTimeHours: "",
 		prepTimeMins: "",
 	});
+
+	useEffect(() => {
+		if (editRecipe) {
+			setFormDataToRecipe(setForm, editRecipe);
+		}
+	}, [editRecipe]);
+
 	const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
 		{}
 	);
 	const getNextIngId = useIdGenerator();
 
+	//Seperate ingredients list into ingredients with and without group
 	const ungroupedIngredients = ingredients.filter((i) => !i.group);
 	const ingredientGroups = ingredients
 		.filter((i) => i.group)
@@ -212,29 +257,32 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 			return acc;
 		}, {} as Record<string, InputIngredient[]>);
 
-	const addNote = () => {
-		const trimmed = form.note.trim();
-		if (trimmed && !notes.includes(trimmed)) {
-			setNotes([...notes, trimmed]);
-			setForm((prev) => ({ ...prev, note: "" }));
-		}
-	};
+	const addNote = useCallback(
+		() => () => {
+			const trimmed = form.note.trim();
+			if (trimmed && !notes.includes(trimmed)) {
+				setNotes([...notes, trimmed]);
+				setForm((prev) => ({ ...prev, note: "" }));
+			}
+		},
+		[form.note, notes]
+	);
 
-	const addStep = () => {
+	const addStep = useCallback(() => {
 		const trimmed = form.step.trim();
 		if (trimmed && !steps.includes(trimmed)) {
 			setSteps([...steps, trimmed]);
 			setForm((prev) => ({ ...prev, step: "" }));
 		}
-	};
+	}, [form.step, steps]);
 
-	const addTag = () => {
+	const addTag = useCallback(() => {
 		const trimmed = form.tag.trim();
 		if (trimmed && !tags.includes(trimmed)) {
 			setTags([...tags, trimmed]);
 			setForm((prev) => ({ ...prev, tag: "" }));
 		}
-	};
+	}, [form.tag, tags]);
 
 	const resetForm = () => {
 		setForm({
@@ -271,82 +319,100 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 		title: null,
 	});
 
-	const debouncedValidateField = (field: keyof FormData, value: string) => {
-		if (debouncedTimers.current[field]) {
-			clearTimeout(debouncedTimers.current[field]);
-		}
+	const debouncedValidateField = useCallback(
+		(field: keyof FormData, value: string) => {
+			if (debouncedTimers.current[field]) {
+				clearTimeout(debouncedTimers.current[field]);
+			}
 
-		debouncedTimers.current[field] = setTimeout(
-			() => {
-				try {
-					schema
-						.pick({ [field]: true } as { [K in keyof FormData]?: true })
-						.parse({ [field]: value });
-					setErrors((prev) => ({ ...prev, [field]: undefined }));
-				} catch (e) {
-					if (e instanceof z.ZodError) {
-						setErrors((prev) => ({ ...prev, [field]: e.errors[0].message }));
+			debouncedTimers.current[field] = setTimeout(
+				() => {
+					try {
+						schema
+							.pick({ [field]: true } as { [K in keyof FormData]?: true })
+							.parse({ [field]: value });
+						setErrors((prev) => ({ ...prev, [field]: undefined }));
+					} catch (e) {
+						if (e instanceof z.ZodError) {
+							setErrors((prev) => ({ ...prev, [field]: e.errors[0].message }));
+						}
 					}
-				}
-				//Show immediately if error is fixed, but debounce otherwise
-			},
-			errors[field] ? 0 : 300
-		);
-	};
+					//Show immediately if error is fixed, but debounce otherwise
+				},
+				errors[field] ? 0 : 300
+			);
+		},
+		[errors]
+	);
 
-	const handleChange =
+	const handleChange = useCallback(
 		(field: keyof FormData) =>
-		(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-			const value = e.target.value;
+			(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+				const value = e.target.value;
 
-			setForm((prev) => ({ ...prev, [field]: value }));
-			debouncedValidateField(field, value);
-		};
+				setForm((prev) => ({ ...prev, [field]: value }));
+				debouncedValidateField(field, value);
+			},
+		[debouncedValidateField]
+	);
 
-	const handleServingsIncrement = () => {
+	const handleServingsIncrement = useCallback(() => {
 		const newServings = (
 			Math.max(0, Number(form.servings) + 1) || 1
 		).toString();
 		setForm((prev) => ({ ...prev, servings: newServings }));
 		debouncedValidateField("servings", newServings);
-	};
+	}, [debouncedValidateField, form.servings]);
 
-	const handleServingsDecrement = () => {
+	const handleServingsDecrement = useCallback(() => {
 		const newServings = (
 			Math.max(0, Number(form.servings) - 1) || 1
 		).toString();
 		setForm((prev) => ({ ...prev, servings: newServings }));
 		debouncedValidateField("servings", newServings);
-	};
+	}, [debouncedValidateField, form.servings]);
 
-	const validateBeforeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		const result = schema.safeParse(form);
+	const validateBeforeSubmit = useCallback(
+		(e: React.FormEvent<HTMLFormElement>) => {
+			const result = schema.safeParse(form);
 
-		if (!result.success) {
-			e.preventDefault();
-			const newErrors: typeof errors = {};
-			for (const issue of result.error.issues) {
-				const field = issue.path[0] as keyof FormData;
-				newErrors[field] = issue.message;
+			if (!result.success) {
+				e.preventDefault();
+				const newErrors: typeof errors = {};
+				for (const issue of result.error.issues) {
+					const field = issue.path[0] as keyof FormData;
+					newErrors[field] = issue.message;
+				}
+				setErrors(newErrors);
+			} else {
+				setErrors({});
 			}
-			setErrors(newErrors);
-		} else {
-			setErrors({});
-		}
-	};
+		},
+		[form]
+	);
 
 	const sendToServer = async (formData: globalThis.FormData) => {
 		formData.append("ingredients", JSON.stringify(ingredients));
 		formData.append("steps", JSON.stringify(steps));
 		formData.append("notes", JSON.stringify(notes));
 		formData.append("tags", JSON.stringify(tags));
-		const result = await createRecipeForUser(formData);
-		if (result.success) {
+		let success = false;
+		let message = "";
+		if (editRecipe) {
+			const result = await updateRecipe(formData, editRecipe.id);
+			success = result.success;
+			message = result.error ?? "";
+		} else {
+			const result = await createRecipeForUser(formData);
+			success = result.success;
+			message = result.message;
+		}
+		if (success) {
 			setFormError("");
 			resetForm();
 			redirect("\\");
 		} else {
-			setFormError(result.message);
+			setFormError(message);
 		}
 	};
 
@@ -354,7 +420,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 		<div className="flex flex-col items-center">
 			<div className="w-200 mt-10 mb-10">
 				<h1 className="text-3xl font-bold mb-10 self-start">
-					Create New Recipe
+					{editRecipe ? editRecipe.title : "Create New Recipe"}
 				</h1>
 				<Form
 					onSubmit={validateBeforeSubmit}
@@ -363,6 +429,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 					}}
 					className="grid w-full space-y-6 grid-cols-2 gap-4"
 				>
+					{/* Title Secttion */}
 					<div className="grid w-full max-w-sm items-center gap-3">
 						<Label htmlFor="title">Recipe Name *</Label>
 						<Input
@@ -380,6 +447,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 						/>
 						{errors.title && <p className="text-red-500">{errors.title}</p>}
 					</div>
+					{/* Servings Section */}
 					<div className="flex flex-col gap-3">
 						<Label htmlFor="servings">Servings</Label>
 						<div className="flex w-full max-w-sm items-center gap-2">
@@ -420,6 +488,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 							<p className="text-red-500">{errors.servings}</p>
 						)}
 					</div>
+					{/* Description Section */}
 					<div className="grid w-full max-w-sm items-center gap-3 col-span-2">
 						<Label htmlFor="desc">Description</Label>
 						<Input
@@ -435,7 +504,9 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 							onChange={handleChange("description")}
 						/>
 					</div>
+					{/* Ingredients Section */}
 					<div>
+						{/* Ungrouped Ingredients Section */}
 						<div>
 							<IngredientInput
 								ingredients={ingredients}
@@ -462,7 +533,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 								{!showRecipeGroupInput && <FaPlus />}
 								Ingredient Group
 							</Button>
-
+							{/* Grouped Ingredients Section */}
 							{showRecipeGroupInput && (
 								<IngredientInput
 									ingredients={ingredients}
@@ -476,10 +547,12 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 								/>
 							)}
 						</div>
+						{/* Ingredients List Section */}
 						{ingredients.length > 0 && (
 							<h3 className="font-semibold">Ingredients</h3>
 						)}
 						<div>
+							{/* Ungrouped Ingredients List Section */}
 							<div>
 								{ungroupedIngredients.map((uI) => (
 									<IngredientItem
@@ -493,6 +566,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 									/>
 								))}
 							</div>
+							{/* Grouped Ingredients List Section */}
 							{Object.entries(ingredientGroups).map(([groupName, items]) => (
 								<div key={groupName}>
 									<h2 className="font-semibold p-2">{groupName}</h2>
@@ -511,20 +585,9 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 									</ul>
 								</div>
 							))}
-							{/* {Object.entries(ingredientGroups).map(([groupName, items]) => (
-								<div key={groupName}>
-									<p>{groupName}</p>
-									<ul>
-										{items.map((i) => (
-											<li
-												key={i.id}
-											>{`${i.quantity} ${i.unit} ${i.ingredient}`}</li>
-										))}
-									</ul>
-								</div>
-							))} */}
 						</div>
 					</div>
+					{/* Instructions Section */}
 					<div>
 						<div className="flex flex-col gap-3">
 							<Label htmlFor="step">Instructions</Label>
@@ -555,6 +618,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 									<FaPlus />
 								</Button>
 							</div>
+							{/* Instructions List Section */}
 							<div>
 								{steps.map((step, index) => (
 									<div
@@ -581,7 +645,9 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 							</div>
 						</div>
 					</div>
+					{/* Time Section */}
 					<div>
+						{/* Cook Time Section */}
 						<div className="flex flex-col gap-3">
 							<Label htmlFor="cookTime">Cook Time</Label>
 							<div className="flex gap-3 items-center">
@@ -621,6 +687,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 							)}
 						</div>
 					</div>
+					{/* Prep Time Section */}
 					<div>
 						<div className="flex flex-col gap-3">
 							<Label htmlFor="cookTime">Prep Time</Label>
@@ -661,6 +728,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 							)}
 						</div>
 					</div>
+					{/* Notes Section */}
 					<div className="flex flex-col gap-3">
 						<Label htmlFor="note">Notes</Label>
 						<div className="flex gap-3 items-end">
@@ -689,7 +757,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 								<FaPlus />
 							</Button>
 						</div>
-
+						{/* Notes List Section */}
 						<div>
 							{notes.map((note) => (
 								<div
@@ -712,6 +780,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 							))}
 						</div>
 					</div>
+					{/* Tags Section */}
 					<div className="flex flex-col gap-3">
 						<Label htmlFor="tag">Tags</Label>
 						<div className="flex gap-3">
@@ -741,6 +810,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 								<FaPlus />
 							</Button>
 						</div>
+						{/* Tags List Section */}
 						<div className="flex gap-3 flex-wrap">
 							{tags.map((tag) => (
 								<div
@@ -763,6 +833,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 						</div>
 					</div>
 					{/*TODO*/
+					/* Image Section */
 					/*https://dev.to/drprime01/how-to-validate-a-file-input-with-zod-5739*/}
 					{/* <input
 				type="file"
@@ -786,6 +857,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 					}
 				}}
 			/> */}
+					{/* Action Buttons Section */}
 					<div className="col-span-2 justify-self-center flex gap-3">
 						<Button
 							type="button"
@@ -803,7 +875,7 @@ export default function CreateRecipe({ userId }: CreateRecipeProps) {
 									: false
 							}
 						>
-							Create
+							{editRecipe ? "Save" : "Create"}
 						</Button>
 					</div>
 

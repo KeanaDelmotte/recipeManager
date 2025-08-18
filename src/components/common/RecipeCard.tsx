@@ -111,9 +111,11 @@ export default function RecipeCard({
 
 				{/* Buttons Section */}
 				<div className="flex gap-2 mt-auto">
-					<Button size="sm" variant="outline" className="flex-1">
-						<FaPen className="mr-1" size={12} />
-						Edit
+					<Button size="sm" variant="outline" className="flex-1" asChild>
+						<Link href={`/recipes/${id}?edit=true`}>
+							<FaPen className="mr-1" size={12} />
+							Edit
+						</Link>
 					</Button>
 					<Button size="sm" className="flex-1" variant="secondary" asChild>
 						<Link href={`/recipes/${id}`}>

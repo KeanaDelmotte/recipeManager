@@ -1,6 +1,8 @@
 import { Prisma } from "@/generated/prisma";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { RecipeIngredientWithIngredient } from "./types";
+import { InputIngredient } from "@/components/common/CreateRecipe";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -28,4 +30,40 @@ export function isPrismaError(error: any) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isPrismaValidationError(error: any) {
 	return error.constructor.name === Prisma.PrismaClientValidationError.name;
+}
+
+//Convert ingredient from db to ingredient used on create/edit page
+/**
+ * Converts an array of `RecipeIngredientWithIngredient` objects into an array of `InputIngredient` objects.
+ *
+ * Each ingredient is mapped to a new object with stringified `id`, `ingredient` name, `quantity`, `unit`, and optional `group`.
+ *
+ * @param recipeIngredients - The array of recipe ingredients to convert.
+ * @returns An array of `InputIngredient` objects formatted for input forms.
+ */
+export function RecipeIngredientsToInputIngredients(
+	recipeIngredients: RecipeIngredientWithIngredient[]
+): InputIngredient[] {
+	return recipeIngredients.map((ingredient, index) => {
+		return {
+			id: `${index}`,
+			ingredient: ingredient.ingredient.name,
+			quantity: `${ingredient.quantity}`,
+			unit: `${ingredient.unit}`,
+			group: ingredient.group ?? undefined,
+		};
+	});
+}
+
+/**
+ * Converts a time duration from minutes to an object containing hours and minutes.
+ *
+ * @param timeInMinutes - The total time in minutes to convert.
+ * @returns An object with `hours` and `minutes` properties representing the equivalent duration.
+ */
+export function TimeInMinutesToHoursAndMinutes(timeInMinutes: number) {
+	const minutes = timeInMinutes % 60;
+	const hours = Math.floor((timeInMinutes - minutes) / 60);
+
+	return { hours, minutes };
 }
