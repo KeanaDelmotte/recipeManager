@@ -47,7 +47,12 @@ export async function createRecipe(userId: string, formData: FormData) {
 					userId,
 					ingredients: {
 						create: ingredients.map((ingredient) => ({
-							ingredient: { create: { name: ingredient.ingredient } },
+							ingredient: {
+								connectOrCreate: {
+									where: { name: ingredient.ingredient },
+									create: { name: ingredient.ingredient },
+								},
+							},
 							quantity: parseFloat(ingredient.quantity),
 							unit: ingredient.unit,
 							group: ingredient.group,
@@ -70,7 +75,12 @@ export async function createRecipe(userId: string, formData: FormData) {
 					},
 					cookTimeInMins: totalCookTime,
 					prepTimeInMins: totalPrepTime,
-					tags: { create: tags.map((tag) => ({ title: tag })) },
+					tags: {
+						connectOrCreate: tags.map((tag) => ({
+							where: { title: tag },
+							create: { title: tag },
+						})),
+					},
 				},
 			});
 			return { success: true, message: "Successfully created recipe!" };
@@ -85,6 +95,108 @@ export async function createRecipe(userId: string, formData: FormData) {
 			return { success: false, message: error.message };
 		}
 		return { success: false, message: "Could not create recipe." };
+	}
+}
+
+export async function update(
+	userId: string,
+	formData: FormData,
+	recipeId: number
+) {
+	try {
+		const session = await auth();
+		const user = session?.user;
+
+    //Do not let user that doesn't own recipe edit it
+		if (user?.id !== userId) {
+			return { success: false, error: "Unauthorized", status: 401 };
+		}
+
+		const title = formData.get("title")?.toString();
+		const description = formData.get("description")?.toString();
+		const servings = parseFloat(formData.get("servings")?.toString() ?? "");
+		const imageUrl = formData.get("file")?.toString();
+		const steps = JSON.parse(
+			formData.get("steps")?.toString() ?? ""
+		) as string[];
+		const ingredients = JSON.parse(
+			formData.get("ingredients")?.toString() ?? ""
+		) as InputIngredient[];
+		const notes = JSON.parse(
+			formData.get("notes")?.toString() ?? ""
+		) as string[];
+		const cookTimeHours = Number(
+			formData.get("cookTimeHours")?.toString() ?? "0"
+		);
+		const cookTimeMins =
+			Number(formData.get("cookTimeMins")?.toString() ?? "0") ?? 0;
+		const prepTimeHours =
+			Number(formData.get("prepTimeHours")?.toString() ?? "0") ?? 0;
+		const prepTimeMins =
+			Number(formData.get("prepTimeMins")?.toString() ?? "0") ?? 0;
+		const tags = JSON.parse(formData.get("tags")?.toString() ?? "") as string[];
+
+    //Convert time to time in minutes
+		const totalCookTime = cookTimeHours * 60 + cookTimeMins;
+		const totalPrepTime = prepTimeHours * 60 + prepTimeMins;
+
+		const updatedRecipe = await prisma.recipe.update({
+			where: { id: recipeId },
+			data: {
+				title,
+				description,
+				servings,
+				imageUrl,
+				userId,
+				ingredients: {
+          //Delete all records first, then create new ones so that there's no duplicates
+					deleteMany: {},
+					create: ingredients.map((ingredient) => ({
+						ingredient: {
+              //Only create the ingredient if it doesnt already exist.
+							connectOrCreate: {
+								where: { name: ingredient.ingredient },
+								create: { name: ingredient.ingredient },
+							},
+						},
+						quantity: parseFloat(ingredient.quantity),
+						unit: ingredient.unit,
+						group: ingredient.group,
+					})),
+				},
+				steps: {
+					deleteMany: {},
+					createMany: {
+						data: steps?.map((step, index) => ({
+							content: step,
+							order: index,
+						})),
+					},
+				},
+				notes: {
+					deleteMany: {},
+					createMany: {
+						data: notes.map((note) => ({
+							content: note,
+						})),
+					},
+				},
+				cookTimeInMins: totalCookTime,
+				prepTimeInMins: totalPrepTime,
+				tags: {
+					connectOrCreate: tags.map((tag) => ({
+						where: { title: tag },
+						create: { title: tag },
+					})),
+				},
+			},
+		});
+		return { success: true, recipe: updatedRecipe };
+	} catch (error) {
+		if (error instanceof Error) {
+			return { success: false, error: error.message };
+		}
+		return { success: false, error: `Could not update recipe ${recipeId}` };
 	}
 }
 

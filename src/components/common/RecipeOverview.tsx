@@ -17,13 +17,11 @@ import { timeInMinutesToReadable } from "@/lib/utils";
 type Ingredient = {
 	ingredient: {
 		name: string;
-		id: number;
 	};
 } & {
 	id: number;
 	recipeId: number;
 	note: string | null;
-	ingredientId: number;
 	quantity: number | null;
 	unit: string | null;
 	group: string | null;
