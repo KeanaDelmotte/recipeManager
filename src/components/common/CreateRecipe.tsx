@@ -257,16 +257,13 @@ export default function CreateRecipe({
 			return acc;
 		}, {} as Record<string, InputIngredient[]>);
 
-	const addNote = useCallback(
-		() => () => {
-			const trimmed = form.note.trim();
-			if (trimmed && !notes.includes(trimmed)) {
-				setNotes([...notes, trimmed]);
-				setForm((prev) => ({ ...prev, note: "" }));
-			}
-		},
-		[form.note, notes]
-	);
+	const addNote = useCallback(() => {
+		const trimmed = form.note.trim();
+		if (trimmed && !notes.includes(trimmed)) {
+			setNotes([...notes, trimmed]);
+			setForm((prev) => ({ ...prev, note: "" }));
+		}
+	}, [form.note, notes]);
 
 	const addStep = useCallback(() => {
 		const trimmed = form.step.trim();
