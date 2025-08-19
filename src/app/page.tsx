@@ -15,9 +15,8 @@ export default async function Home({ searchParams }: PageProps) {
 	const search = (await searchParams)?.search;
 
 	const recipesResponse = await getRecipes(search);
-	const recipesResult = await recipesResponse.json();
 
-	if (recipesResult.success && recipesResult.recipes) {
+	if (recipesResponse.status == 200 && recipesResponse.recipes) {
 		return (
 			<div className={cn("!gap-0", styles.page)}>
 				<main className={cn(styles.main, "w-full")}>
@@ -31,7 +30,7 @@ export default async function Home({ searchParams }: PageProps) {
 					)}
 					{user && (
 						<div className="w-full flex flex-col gap-4">
-							<MyRecipes recipes={recipesResult.recipes} />
+							<MyRecipes recipes={recipesResponse.recipes} />
 							<Button asChild className="w-fit z-10 fixed right-5 bottom-5">
 								<Link href="/createrecipe">
 									<FaPlus />

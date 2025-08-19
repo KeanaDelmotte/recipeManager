@@ -1,6 +1,6 @@
 "use client";
 
-import { createRecipe, update } from "@/lib/actions";
+import { createRecipe, updateRecipe } from "@/lib/actions";
 import Form from "next/form";
 import {
 	useState,
@@ -191,13 +191,7 @@ interface CreateRecipeProps {
 	editRecipe?: FullRecipe;
 }
 
-export default function CreateRecipe({
-	userId,
-	editRecipe,
-}: CreateRecipeProps) {
-	const createRecipeForUser = createRecipe.bind(null, userId);
-	const updateRecipe = update.bind(null, userId);
-
+export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 	const [showRecipeGroupInput, setShowRecipeGroupInput] = useState(false);
 	const [formError, setFormError] = useState("");
 
@@ -393,18 +387,18 @@ export default function CreateRecipe({
 		formData.append("steps", JSON.stringify(steps));
 		formData.append("notes", JSON.stringify(notes));
 		formData.append("tags", JSON.stringify(tags));
-		let success = false;
+		let status = 0;
 		let message = "";
 		if (editRecipe) {
 			const result = await updateRecipe(formData, editRecipe.id);
-			success = result.success;
+			status = result.status;
 			message = result.error ?? "";
 		} else {
-			const result = await createRecipeForUser(formData);
-			success = result.success;
-			message = result.message;
+			const result = await createRecipe(formData);
+			status = result.status;
+			message = result.error!;
 		}
-		if (success) {
+		if (status == 201) {
 			setFormError("");
 			resetForm();
 			redirect("\\");

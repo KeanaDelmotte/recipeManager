@@ -1,15 +1,18 @@
 "use server";
 
 import { prisma } from "./prisma";
-import path from "path";
-import fs from "fs";
-import { NextResponse } from "next/server";
 import { InputIngredient } from "@/components/common/CreateRecipe";
 import { auth } from "./auth";
 import { isPrismaError } from "./utils";
 
-export async function createRecipe(userId: string, formData: FormData) {
+export async function createRecipe(formData: FormData) {
 	try {
+		const session = await auth();
+		const user = session?.user;
+
+		if (!user) {
+			return { error: "Not authenticated", status: 401 };
+		}
 		const title = formData.get("title")?.toString();
 		const description = formData.get("description")?.toString();
 		const servings = parseFloat(formData.get("servings")?.toString() ?? "");
@@ -44,7 +47,7 @@ export async function createRecipe(userId: string, formData: FormData) {
 					description,
 					servings,
 					imageUrl,
-					userId,
+					userId: user.id!,
 					ingredients: {
 						create: ingredients.map((ingredient) => ({
 							ingredient: {
@@ -83,33 +86,35 @@ export async function createRecipe(userId: string, formData: FormData) {
 					},
 				},
 			});
-			return { success: true, message: "Successfully created recipe!" };
+			return { message: "Successfully created recipe!", status: 201 };
 		} else {
 			return {
-				success: false,
-				message: "Could not create recipe. Minimum fields not met.",
+				error: "Could not create recipe. Minimum fields not met.",
+				status: 400,
 			};
 		}
 	} catch (error) {
 		if (error instanceof Error) {
-			return { success: false, message: error.message };
+			return { error: error.message, status: 500 };
 		}
-		return { success: false, message: "Could not create recipe." };
+		return { error: "Could not create recipe.", status: 500 };
 	}
 }
 
-export async function update(
-	userId: string,
-	formData: FormData,
-	recipeId: number
-) {
+export async function updateRecipe(formData: FormData, recipeId: number) {
 	try {
 		const session = await auth();
 		const user = session?.user;
 
-    //Do not let user that doesn't own recipe edit it
-		if (user?.id !== userId) {
-			return { success: false, error: "Unauthorized", status: 401 };
+		if (!user) {
+			return { error: "Not signed in", status: 401 };
+		}
+		const existingRecipe = await prisma.recipe.findFirstOrThrow({
+			where: { userId: user.id, id: recipeId },
+		});
+		//Do not let user that doesn't own recipe edit it
+		if (!existingRecipe) {
+			return { error: "Could not edit recipe", status: 404 };
 		}
 
 		const title = formData.get("title")?.toString();
@@ -136,7 +141,7 @@ export async function update(
 			Number(formData.get("prepTimeMins")?.toString() ?? "0") ?? 0;
 		const tags = JSON.parse(formData.get("tags")?.toString() ?? "") as string[];
 
-    //Convert time to time in minutes
+		//Convert time to time in minutes
 		const totalCookTime = cookTimeHours * 60 + cookTimeMins;
 		const totalPrepTime = prepTimeHours * 60 + prepTimeMins;
 
@@ -147,13 +152,13 @@ export async function update(
 				description,
 				servings,
 				imageUrl,
-				userId,
+				userId: user.id,
 				ingredients: {
-          //Delete all records first, then create new ones so that there's no duplicates
+					//Delete all records first, then create new ones so that there's no duplicates
 					deleteMany: {},
 					create: ingredients.map((ingredient) => ({
 						ingredient: {
-              //Only create the ingredient if it doesnt already exist.
+							//Only create the ingredient if it doesnt already exist.
 							connectOrCreate: {
 								where: { name: ingredient.ingredient },
 								create: { name: ingredient.ingredient },
@@ -191,48 +196,57 @@ export async function update(
 				},
 			},
 		});
-		return { success: true, recipe: updatedRecipe };
+		return { success: true, recipe: updatedRecipe, status: 200 };
 	} catch (error) {
 		if (error instanceof Error) {
-			return { success: false, error: error.message };
+			return { error: error.message, status: 500 };
 		}
-		return { success: false, error: `Could not update recipe ${recipeId}` };
+		return {
+			error: `Could not update recipe ${recipeId}`,
+			status: 500,
+		};
 	}
 }
 
-export async function upload(formData: FormData) {
-	try {
-		const file = (formData.get("file") as Blob) || null;
-		const uploadDir = path.resolve(
-			process.env.ROOT_PATH ?? "",
-			"public/uploads"
-		);
-		if (file) {
-			const buffer = Buffer.from(await file.arrayBuffer());
-			if (!fs.existsSync(uploadDir)) {
-				fs.mkdirSync(uploadDir);
-			}
+// export async function upload(formData: FormData) {
+// 	try {
+// 		const file = (formData.get("file") as Blob) || null;
+// 		const uploadDir = path.resolve(
+// 			process.env.ROOT_PATH ?? "",
+// 			"public/uploads"
+// 		);
+// 		if (file) {
+// 			const buffer = Buffer.from(await file.arrayBuffer());
+// 			if (!fs.existsSync(uploadDir)) {
+// 				fs.mkdirSync(uploadDir);
+// 			}
 
-			fs.writeFileSync(
-				path.resolve(uploadDir, (formData.get("file") as File).name),
-				buffer
-			);
-		} else {
-			return NextResponse.json({ success: false });
-		}
-	} catch (e) {
-		return NextResponse.json({ success: false, message: e });
-	}
-}
+// 			fs.writeFileSync(
+// 				path.resolve(uploadDir, (formData.get("file") as File).name),
+// 				buffer
+// 			);
+// 		} else {
+// 			return {  };
+// 		}
+// 	} catch (e) {
+// 		return { , message: e };
+// 	}
+// }
 
 export async function deleteRecipe(id: number) {
 	try {
 		const session = await auth();
 		const user = session?.user;
 
-		//Check if recipe belongs to user
 		if (!user) {
-			return { error: "Unauthorized", status: 401 };
+			return { error: "Not signed in", status: 401 };
+		}
+		const existingRecipe = await prisma.recipe.findFirstOrThrow({
+			where: { userId: user?.id, id },
+		});
+		//Do not let user that doesn't own recipe edit it
+		if (!existingRecipe) {
+			return { error: "Could not edit recipe", status: 404 };
 		}
 
 		//Check if recipe id is valid
@@ -262,7 +276,7 @@ export async function deleteRecipe(id: number) {
 				status: 500,
 			};
 		}
-		return { error: "Failed to delete recipe" };
+		return { error: "Failed to delete recipe", status: 500 };
 	}
 }
 
@@ -282,14 +296,14 @@ export async function getRecipes(filter: string) {
 				},
 			},
 		});
-		return NextResponse.json({ success: true, recipes: filteredRecipes });
+		return { recipes: filteredRecipes, status: 200 };
 	} catch (error) {
 		if (error instanceof Error) {
-			return NextResponse.json({ success: false, message: error.message });
+			return { error: error.message, status: 500 };
 		}
-		return NextResponse.json({
-			success: false,
-			message: "Could not fetch recipes",
-		});
+		return {
+			error: "Could not fetch recipes",
+			status: 500,
+		};
 	}
 }
