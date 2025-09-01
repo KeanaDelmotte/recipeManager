@@ -33,8 +33,8 @@ import {
 	RecipeIngredientsToInputIngredients,
 	TimeInMinutesToHoursAndMinutes,
 } from "@/lib/utils";
-import Spinner from "../ui/spinner";
 import Link from "next/link";
+import LoadingView from "./LoadingView";
 
 export interface InputIngredient {
 	id: string;
@@ -1165,19 +1165,6 @@ function IngredientItem({ ingredient, removeIngredient }: IngredientItemProps) {
 			>
 				<FaRegTrashCan className="text-red-500 size-4 transition duration-1000" />
 			</Button>
-		</div>
-	);
-}
-
-interface LoadingViewProps {
-	children?: ReactNode;
-}
-
-function LoadingView({ children }: LoadingViewProps) {
-	return (
-		<div className="flex flex-col gap-3 w-full justify-center content-center items-center h-dvh">
-			{children}
-			<Spinner />
 		</div>
 	);
 }
