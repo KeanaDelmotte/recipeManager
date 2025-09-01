@@ -21,7 +21,7 @@ export default async function Home({ searchParams }: PageProps) {
 			<div className={cn("!gap-0", styles.page)}>
 				<main className={cn(styles.main, "w-full")}>
 					{!user && (
-						<div className="flex flex-col gap-3 items-center">
+						<div className="flex flex-col gap-3 items-center h-dvh justify-center">
 							<p>{"Looks like you're not signed in"}</p>
 							<Button asChild>
 								<Link href="/api/auth/signin">Sign In</Link>
