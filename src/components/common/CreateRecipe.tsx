@@ -8,14 +8,19 @@ import {
 	SetStateAction,
 	useEffect,
 	useCallback,
+	useActionState,
+	ReactNode,
+	startTransition,
 } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
 	FaAngleUp,
+	FaCircleCheck,
 	FaMinus,
 	FaPlus,
 	FaRegTrashCan,
+	FaTriangleExclamation,
 	FaXmark,
 } from "react-icons/fa6";
 import { Input } from "../../components/ui/input";
@@ -24,9 +29,12 @@ import { Textarea } from "../../components/ui/textarea";
 import { redirect } from "next/navigation";
 import { FullRecipe } from "@/lib/types";
 import {
+	cn,
 	RecipeIngredientsToInputIngredients,
 	TimeInMinutesToHoursAndMinutes,
 } from "@/lib/utils";
+import Spinner from "../ui/spinner";
+import Link from "next/link";
 
 export interface InputIngredient {
 	id: string;
@@ -191,9 +199,24 @@ interface CreateRecipeProps {
 	editRecipe?: FullRecipe;
 }
 
+interface stateType {
+	success: boolean;
+	message: string;
+	status: number;
+	formData: globalThis.FormData | null;
+}
+
+const initialState: stateType = {
+	success: false,
+	message: "",
+	status: 0,
+	formData: null,
+};
+
 export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 	const [showRecipeGroupInput, setShowRecipeGroupInput] = useState(false);
-	const [formError, setFormError] = useState("");
+
+	const titleRef = useRef<HTMLInputElement>(null);
 
 	const [ingredients, setIngredients] = useState<InputIngredient[]>(
 		RecipeIngredientsToInputIngredients(editRecipe?.ingredients ?? [])
@@ -237,6 +260,68 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 	const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
 		{}
 	);
+
+	const sendToServer = useCallback(
+		async (state: stateType, formData: globalThis.FormData | null) => {
+			if (formData) {
+				formData.append("ingredients", JSON.stringify(ingredients));
+				formData.append("steps", JSON.stringify(steps));
+				formData.append("notes", JSON.stringify(notes));
+				formData.append("tags", JSON.stringify(tags));
+
+				let status = 0;
+				let message = "";
+
+				if (editRecipe) {
+					const result = await updateRecipe(formData, editRecipe.id);
+					status = result.status;
+					message = result.error ?? "";
+				} else {
+					const result = await createRecipe(formData);
+					status = result.status;
+					message = result.message ?? "";
+				}
+				if (status == 201 || status == 200) {
+					return {
+						success: true,
+						message: `Recipe ${editRecipe ? "updated" : "created"}`,
+						status,
+						formData,
+					};
+				} else {
+					return { success: false, message, status, formData };
+				}
+			}
+			return {
+				success: false,
+				message: "Form data is invalid",
+				status: 500,
+				formData,
+			};
+		},
+		[editRecipe, ingredients, notes, tags, steps]
+	);
+
+	const [state, formAction, isPending] = useActionState<
+		stateType,
+		globalThis.FormData | null
+	>(sendToServer, initialState);
+
+	useEffect(() => {
+		if (state.success) {
+			//Wait a couple ms before redirecting so user can read the success message
+			setTimeout(() => {
+				redirect("\\");
+			}, 200);
+		} else if (!state.success && state.message.length > 0) {
+			window.scrollTo(0, 0);
+		}
+	}, [state]);
+
+	useEffect(() => {
+		titleRef.current?.focus();
+	});
+
 	const getNextIngId = useIdGenerator();
 
 	//Seperate ingredients list into ingredients with and without group
@@ -382,30 +467,17 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 		[form]
 	);
 
-	const sendToServer = async (formData: globalThis.FormData) => {
-		formData.append("ingredients", JSON.stringify(ingredients));
-		formData.append("steps", JSON.stringify(steps));
-		formData.append("notes", JSON.stringify(notes));
-		formData.append("tags", JSON.stringify(tags));
-		let status = 0;
-		let message = "";
-		if (editRecipe) {
-			const result = await updateRecipe(formData, editRecipe.id);
-			status = result.status;
-			message = result.error ?? "";
-		} else {
-			const result = await createRecipe(formData);
-			status = result.status;
-			message = result.error!;
-		}
-		if (status == 201) {
-			setFormError("");
-			resetForm();
-			redirect("\\");
-		} else {
-			setFormError(message);
-		}
-	};
+	if (isPending) {
+		return (
+			<LoadingView>
+				<p>{`${editRecipe ? "Updating" : "Creating"} Recipe`}</p>
+			</LoadingView>
+		);
+	}
+
+	if (state.success) {
+		return <SuccessView editRecipe={editRecipe ? true : false} />;
+	}
 
 	return (
 		<div className="flex flex-col items-center">
@@ -413,10 +485,35 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 				<h1 className="text-3xl font-bold mb-10 self-start">
 					{editRecipe ? editRecipe.title : "Create New Recipe"}
 				</h1>
+				<ErrorBanner
+					message={state.message}
+					visible={!state.success && state.status != 0}
+				>
+					{state.status === 401 && (
+						<Link
+							className="underline text-white cursor-pointer inline"
+							href="/api/auth/signin"
+						>
+							Sign In
+						</Link>
+					)}
+					{state.status === 500 && (
+						<span
+							className="underline text-white cursor-pointer inline"
+							onClick={() => {
+								startTransition(() => {
+									formAction(state.formData);
+								});
+							}}
+						>
+							Retry?
+						</span>
+					)}
+				</ErrorBanner>
 				<Form
 					onSubmit={validateBeforeSubmit}
 					action={(formData) => {
-						sendToServer(formData);
+						formAction(formData);
 					}}
 					className="grid w-full space-y-6 grid-cols-2 gap-4"
 				>
@@ -434,6 +531,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 									e.preventDefault();
 								}
 							}}
+							ref={titleRef}
 							hasError={errors.title != undefined}
 						/>
 						{errors.title && <p className="text-red-500">{errors.title}</p>}
@@ -861,7 +959,9 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 						</Button>
 						<Button
 							disabled={
-								Object.values(errors).find((v) => v != undefined) != undefined
+								Object.values(errors).find((v) => v != undefined) !=
+									undefined ||
+								(state.success == false && state.status != 0)
 									? true
 									: false
 							}
@@ -869,8 +969,6 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 							{editRecipe ? "Save" : "Create"}
 						</Button>
 					</div>
-
-					{formError && <p>{formError}</p>}
 				</Form>
 			</div>
 		</div>
@@ -1067,6 +1165,56 @@ function IngredientItem({ ingredient, removeIngredient }: IngredientItemProps) {
 			>
 				<FaRegTrashCan className="text-red-500 size-4 transition duration-1000" />
 			</Button>
+		</div>
+	);
+}
+
+interface LoadingViewProps {
+	children?: ReactNode;
+}
+
+function LoadingView({ children }: LoadingViewProps) {
+	return (
+		<div className="flex flex-col gap-3 w-full justify-center content-center items-center h-dvh">
+			{children}
+			<Spinner />
+		</div>
+	);
+}
+
+interface SuccessViewProps {
+	editRecipe: boolean;
+}
+
+function SuccessView({ editRecipe }: SuccessViewProps) {
+	return (
+		<div className="w-full h-dvh flex flex-col gap-3 items-center justify-center">
+			<FaCircleCheck className="text-secondary size-10" />
+			<p>{`Successfully ${editRecipe ? "updated" : "created"} recipe!`}</p>
+		</div>
+	);
+}
+
+interface ErrorBannerProps {
+	message: string;
+	visible: boolean;
+	children?: ReactNode;
+}
+
+function ErrorBanner({ message, visible, children }: ErrorBannerProps) {
+	return (
+		<div
+			className={cn(
+				"w-full col-span-2 flex gap-3 bg-red-300 border-2 border-red-500 mb-10 p-2 rounded-xl items-center",
+				{ hidden: !visible }
+			)}
+		>
+			<FaTriangleExclamation className="size-6 text-white" />
+			<p className=" text-white">
+				{message}
+				&nbsp;
+				{children}
+			</p>
 		</div>
 	);
 }

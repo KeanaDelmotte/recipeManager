@@ -13,6 +13,7 @@ export async function createRecipe(formData: FormData) {
 		if (!user) {
 			return { error: "Not authenticated", status: 401 };
 		}
+
 		const title = formData.get("title")?.toString();
 		const description = formData.get("description")?.toString();
 		const servings = parseFloat(formData.get("servings")?.toString() ?? "");
@@ -40,59 +41,52 @@ export async function createRecipe(formData: FormData) {
 		const totalCookTime = cookTimeHours * 60 + cookTimeMins;
 		const totalPrepTime = prepTimeHours * 60 + prepTimeMins;
 
-		if (title != null) {
-			await prisma.recipe.create({
-				data: {
-					title,
-					description,
-					servings,
-					imageUrl,
-					userId: user.id!,
-					ingredients: {
-						create: ingredients.map((ingredient) => ({
-							ingredient: {
-								connectOrCreate: {
-									where: { name: ingredient.ingredient },
-									create: { name: ingredient.ingredient },
-								},
+		await prisma.recipe.create({
+			data: {
+				title: title!,
+				description,
+				servings,
+				imageUrl,
+				userId: user.id!,
+				ingredients: {
+					create: ingredients.map((ingredient) => ({
+						ingredient: {
+							connectOrCreate: {
+								where: { name: ingredient.ingredient },
+								create: { name: ingredient.ingredient },
 							},
-							quantity: parseFloat(ingredient.quantity),
-							unit: ingredient.unit,
-							group: ingredient.group,
-						})),
-					},
-					steps: {
-						createMany: {
-							data: steps?.map((step, index) => ({
-								content: step,
-								order: index,
-							})),
 						},
-					},
-					notes: {
-						createMany: {
-							data: notes.map((note) => ({
-								content: note,
-							})),
-						},
-					},
-					cookTimeInMins: totalCookTime,
-					prepTimeInMins: totalPrepTime,
-					tags: {
-						connectOrCreate: tags.map((tag) => ({
-							where: { title: tag },
-							create: { title: tag },
+						quantity: parseFloat(ingredient.quantity),
+						unit: ingredient.unit,
+						group: ingredient.group,
+					})),
+				},
+				steps: {
+					createMany: {
+						data: steps?.map((step, index) => ({
+							content: step,
+							order: index,
 						})),
 					},
 				},
-			});
-			return { message: "Successfully created recipe!", status: 201 };
-		} else {
-			return {
-				error: "Could not create recipe. Minimum fields not met.",
-				status: 400,
-			};
-		}
+				notes: {
+					createMany: {
+						data: notes.map((note) => ({
+							content: note,
+						})),
+					},
+				},
+				cookTimeInMins: totalCookTime,
+				prepTimeInMins: totalPrepTime,
+				tags: {
+					connectOrCreate: tags.map((tag) => ({
+						where: { title: tag },
+						create: { title: tag },
+					})),
+				},
+			},
+		});
+		return { message: "Successfully created recipe!", status: 201 };
 	} catch (error) {
 		if (error instanceof Error) {
 			return { error: error.message, status: 500 };
@@ -114,7 +108,7 @@ export async function updateRecipe(formData: FormData, recipeId: number) {
 		});
 		//Do not let user that doesn't own recipe edit it
 		if (!existingRecipe) {
-			return { error: "Could not edit recipe", status: 404 };
+			return { error: "Could not update recipe.", status: 404 };
 		}
 
 		const title = formData.get("title")?.toString();
@@ -197,12 +191,19 @@ export async function updateRecipe(formData: FormData, recipeId: number) {
 			},
 		});
 		return { success: true, recipe: updatedRecipe, status: 200 };
-	} catch (error) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	} catch (error: any) {
+		if (isPrismaError(error) && error.code == "P2025") {
+			return {
+				error: "Could not update recipe. Recipe does not exist.",
+				status: 404,
+			};
+		}
 		if (error instanceof Error) {
 			return { error: error.message, status: 500 };
 		}
 		return {
-			error: `Could not update recipe ${recipeId}`,
+			error: `Could not update recipe ${recipeId}.`,
 			status: 500,
 		};
 	}
@@ -239,19 +240,19 @@ export async function deleteRecipe(id: number) {
 		const user = session?.user;
 
 		if (!user) {
-			return { error: "Not signed in", status: 401 };
+			return { error: "Not signed in.", status: 401 };
 		}
 		const existingRecipe = await prisma.recipe.findFirstOrThrow({
 			where: { userId: user?.id, id },
 		});
-		//Do not let user that doesn't own recipe edit it
+		//Do not let user that doesn't own recipe deleteit
 		if (!existingRecipe) {
-			return { error: "Could not edit recipe", status: 404 };
+			return { error: "Could not delete recipe.", status: 404 };
 		}
 
 		//Check if recipe id is valid
 		if (isNaN(id)) {
-			return { error: "Invalid recipe ID", status: 400 };
+			return { error: "Invalid recipe ID.", status: 400 };
 		}
 
 		//Delete
@@ -260,7 +261,7 @@ export async function deleteRecipe(id: number) {
 		});
 
 		return {
-			message: "Successfully deleted recipe",
+			message: "Successfully deleted recipe.",
 			deletedRecipe,
 			status: 200,
 		};
@@ -268,15 +269,15 @@ export async function deleteRecipe(id: number) {
 	} catch (error: any) {
 		// Prisma record not found
 		if (isPrismaError(error) && error.code === "P2025") {
-			return { error: "Recipe not found", status: 404 };
+			return { error: "Recipe not found.", status: 404 };
 		}
 		if (error instanceof Error) {
 			return {
-				error: `Failed to delete recipe: ${error.message}`,
+				error: `Failed to delete recipe: ${error.message}.`,
 				status: 500,
 			};
 		}
-		return { error: "Failed to delete recipe", status: 500 };
+		return { error: "Failed to delete recipe.", status: 500 };
 	}
 }
 
@@ -302,7 +303,7 @@ export async function getRecipes(filter: string) {
 			return { error: error.message, status: 500 };
 		}
 		return {
-			error: "Could not fetch recipes",
+			error: "Could not fetch recipes.",
 			status: 500,
 		};
 	}
