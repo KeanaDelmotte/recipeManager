@@ -240,14 +240,17 @@ export async function deleteRecipe(id: number) {
 		const user = session?.user;
 
 		if (!user) {
-			return { error: "Not signed in.", status: 401 };
+			return {
+				error: "You must be signed in to delete this recipe.",
+				status: 401,
+			};
 		}
 		const existingRecipe = await prisma.recipe.findFirstOrThrow({
 			where: { userId: user?.id, id },
 		});
-		//Do not let user that doesn't own recipe deleteit
+		//Do not let user that doesn't own recipe delete it
 		if (!existingRecipe) {
-			return { error: "Could not delete recipe.", status: 404 };
+			return { error: "Recipe not found.", status: 404 };
 		}
 
 		//Check if recipe id is valid
@@ -271,12 +274,7 @@ export async function deleteRecipe(id: number) {
 		if (isPrismaError(error) && error.code === "P2025") {
 			return { error: "Recipe not found.", status: 404 };
 		}
-		if (error instanceof Error) {
-			return {
-				error: `Failed to delete recipe: ${error.message}.`,
-				status: 500,
-			};
-		}
+
 		return { error: "Failed to delete recipe.", status: 500 };
 	}
 }
