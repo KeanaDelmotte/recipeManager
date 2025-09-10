@@ -29,7 +29,7 @@ export default async function Home({ searchParams }: PageProps) {
 						</div>
 					)}
 					{user && (
-						<div className="w-full flex flex-col gap-4">
+						<div className="w-full h-full flex flex-col gap-4">
 							<MyRecipes recipes={recipesResponse.recipes} />
 							<Button asChild className="w-fit z-10 fixed right-5 bottom-5">
 								<Link href="/createrecipe">
