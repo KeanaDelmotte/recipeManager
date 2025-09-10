@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/common/Navbar";
 import React from "react";
 import { auth } from "../lib/auth";
+import { Toaster } from "sonner";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default async function RootLayout({
 			<body>
 				<Navbar user={session?.user} />
 				{children}
+				<Toaster />
 			</body>
 		</html>
 	);

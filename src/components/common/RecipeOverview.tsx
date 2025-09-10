@@ -7,12 +7,14 @@ import {
 	FaPen,
 	FaTag,
 	FaTrashCan,
+	FaCircleXmark,
+	FaCircleCheck,
 } from "react-icons/fa6";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { Note, Recipe, Step, Tag } from "@/generated/prisma";
-import { timeInMinutesToReadable } from "@/lib/utils";
+import { cn, timeInMinutesToReadable } from "@/lib/utils";
 import {
 	Dialog,
 	DialogClose,
@@ -22,6 +24,10 @@ import {
 } from "../ui/dialog";
 import { deleteRecipe } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAsyncAction } from "@/lib/hooks";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 type Ingredient = {
 	ingredient: {
@@ -53,6 +59,8 @@ export default function RecipeOverview({
 }: RecipeOverviewProps) {
 	const totalTime = (recipe.prepTimeInMins || 0) + (recipe.cookTimeInMins || 0);
 	const router = useRouter();
+	const [deleteResult, deleteRecipeWithID, isPending, error] =
+		useAsyncAction(deleteRecipe);
 
 	//Seperate ingredients list into ingredients with and without group
 	const ungroupedIngredients = ingredients.filter((i) => !i.group);
@@ -66,9 +74,41 @@ export default function RecipeOverview({
 			return acc;
 		}, {} as Record<string, Ingredient[]>);
 
+	useEffect(() => {
+		if (deleteResult?.status == 200) {
+			router.push("/");
+			toast.success("Recipe deleted", {
+				description: deleteResult.deletedRecipe?.title
+					? `The recipe "${deleteResult.deletedRecipe?.title}" was deleted successfully.`
+					: "The recipe was deleted successfully.",
+				icon: <FaCircleCheck className="text-secondary w-5 h-5" />,
+				className:
+					"border border-green-400 bg-green-50 text-green-700 shadow-lg rounded-xl",
+			});
+		} else if (deleteResult?.error != null || error) {
+			let description = "Please try again.";
+
+			if (deleteResult?.status != 500 && deleteResult?.error) {
+				description = deleteResult?.error;
+			}
+
+			toast.error("Delete failed", {
+				description:
+					`The recipe ${
+						deleteResult?.deletedRecipe?.title
+							? '"' + deleteResult.deletedRecipe?.title + '"'
+							: ""
+					}  could not be deleted. ` + description,
+				icon: <FaCircleXmark className="text-red-500 w-5 h-5" />,
+				className:
+					"border border-red-400 bg-red-50 text-red-700 shadow-lg rounded-xl",
+			});
+		}
+	}, [deleteResult, router, recipe.title, error]);
+
 	return (
 		<Dialog>
-			<DialogContent>
+			<DialogContent className={cn({ "bg-red-400": isPending })}>
 				<div className="flex flex-col gap-3">
 					<DialogTitle>Delete Recipe</DialogTitle>
 					<p>Are you sure you want to delete this recipe?</p>
@@ -81,12 +121,13 @@ export default function RecipeOverview({
 								type="button"
 								variant="destructive"
 								className="cursor-pointer"
-								onClick={async () => {
-									const result = await deleteRecipe(recipe.id);
-									if (result.status == 200) {
-										router.push("/");
-									}
+								onClick={() => {
+									deleteRecipeWithID(recipe.id);
+									// if (success?.status == 200) {
+									// 	router.push("/");
+									// }
 								}}
+								disabled={isPending}
 							>
 								Delete
 							</Button>
@@ -100,10 +141,13 @@ export default function RecipeOverview({
 					{/* Action Buttons */}
 					<div className="flex justify-end">
 						<div className="flex gap-2 flex-shrink-0">
-							<Button variant="outline" size="sm">
-								<FaPen className="mr-2" size={14} />
-								Edit
+							<Button variant="outline" size="sm" asChild>
+								<Link href={`/recipes/${recipe.id}?edit=true`}>
+									<FaPen className="mr-2" size={14} />
+									Edit
+								</Link>
 							</Button>
+
 							<DialogTrigger asChild>
 								<Button variant="outline">
 									<FaTrashCan size={14} />
