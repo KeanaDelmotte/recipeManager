@@ -11,6 +11,7 @@ import {
 	useActionState,
 	ReactNode,
 	startTransition,
+	Ref,
 } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -217,6 +218,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 	const [showRecipeGroupInput, setShowRecipeGroupInput] = useState(false);
 
 	const titleRef = useRef<HTMLInputElement>(null);
+	const groupRef = useRef<HTMLInputElement>(null);
 
 	const [ingredients, setIngredients] = useState<InputIngredient[]>(
 		RecipeIngredientsToInputIngredients(editRecipe?.ingredients ?? [])
@@ -311,16 +313,19 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 		if (state.success) {
 			//Wait a couple ms before redirecting so user can read the success message
 			setTimeout(() => {
-				redirect("\\");
+				//If editing a recipe, redirect to the overview after editing, otherwise show all recipes
+				if (editRecipe) {
+					redirect(`/recipes/${editRecipe.id}`);
+				} else {
+					redirect("\\");
+				}
 			}, 200);
-		} else if (!state.success && state.message.length > 0) {
-			window.scrollTo(0, 0);
 		}
-	}, [state]);
+	}, [state, editRecipe]);
 
 	useEffect(() => {
 		titleRef.current?.focus();
-	});
+	}, []);
 
 	const getNextIngId = useIdGenerator();
 
@@ -606,22 +611,44 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 								errors={errors}
 								handleChange={handleChange}
 								getNextIngId={getNextIngId}
+								groupRef={groupRef}
 							/>
-							<Button
-								variant="secondary"
-								type="button"
-								onClick={() => {
-									if (showRecipeGroupInput) {
-										setForm((prev) => ({ ...prev, group: "" }));
-									}
-									setShowRecipeGroupInput(!showRecipeGroupInput);
-								}}
-								className="mb-3"
-							>
-								{showRecipeGroupInput && <FaAngleUp />}
-								{!showRecipeGroupInput && <FaPlus />}
-								Ingredient Group
-							</Button>
+							<div className="flex justify-between">
+								<Button
+									variant="secondary"
+									type="button"
+									onClick={() => {
+										if (showRecipeGroupInput) {
+											setForm((prev) => ({ ...prev, group: "" }));
+										}
+										setShowRecipeGroupInput(!showRecipeGroupInput);
+									}}
+									className="mb-3"
+								>
+									{showRecipeGroupInput && <FaAngleUp />}
+									{!showRecipeGroupInput && <FaPlus />}
+									Ingredient Group
+								</Button>
+								{showRecipeGroupInput && form.group.length > 0 && (
+									<Button
+										variant="secondary"
+										type="button"
+										onClick={() => {
+											setForm((prev) => ({
+												...prev,
+												group: "",
+												groupIngredient: "",
+												groupUnit: "",
+												groupQuantity: "",
+											}));
+											groupRef.current?.focus();
+										}}
+									>
+										New Group
+									</Button>
+								)}
+							</div>
+
 							{/* Grouped Ingredients Section */}
 							{showRecipeGroupInput && (
 								<IngredientInput
@@ -633,6 +660,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 									errors={errors}
 									handleChange={handleChange}
 									getNextIngId={getNextIngId}
+									groupRef={groupRef}
 								/>
 							)}
 						</div>
@@ -986,6 +1014,7 @@ interface IngredientInputProps {
 		field: keyof FormData
 	) => (e: React.ChangeEvent<HTMLInputElement>) => void;
 	getNextIngId: () => string;
+	groupRef: Ref<HTMLInputElement>;
 }
 
 function IngredientInput({
@@ -997,6 +1026,7 @@ function IngredientInput({
 	errors,
 	handleChange,
 	getNextIngId,
+	groupRef,
 }: IngredientInputProps) {
 	const ingredientInputRef = useRef<HTMLInputElement>(null);
 
@@ -1054,6 +1084,7 @@ function IngredientInput({
 								e.preventDefault();
 							}
 						}}
+						ref={groupRef}
 					/>
 				</div>
 			)}
