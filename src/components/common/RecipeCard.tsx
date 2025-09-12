@@ -9,6 +9,7 @@ import Styles from "./MyRecipes.module.css";
 import { useState } from "react";
 import { deleteRecipe } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { showErrorToast, showSuccessToast } from "./RecipeOverview";
 interface RecipeCardProps {
 	id: number;
 	imageURL: string;
@@ -146,7 +147,16 @@ export default function RecipeCard({
 								onClick={async () => {
 									const result = await deleteRecipe(id);
 									if (result.status == 200) {
+										showSuccessToast(
+											"Deleted Successfully",
+											`Recipe for ${title} was deleted`
+										);
 										router.refresh();
+									} else {
+										showErrorToast(
+											"Delete failed",
+											`Recipe for ${title} was not deleted`
+										);
 									}
 								}}
 							>
