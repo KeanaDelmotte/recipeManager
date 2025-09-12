@@ -27,19 +27,32 @@ export async function createRecipe(formData: FormData) {
 		const notes = JSON.parse(
 			formData.get("notes")?.toString() ?? ""
 		) as string[];
-		const cookTimeHours = Number(
-			formData.get("cookTimeHours")?.toString() ?? "0"
-		);
-		const cookTimeMins =
-			Number(formData.get("cookTimeMins")?.toString() ?? "0") ?? 0;
-		const prepTimeHours =
-			Number(formData.get("prepTimeHours")?.toString() ?? "0") ?? 0;
-		const prepTimeMins =
-			Number(formData.get("prepTimeMins")?.toString() ?? "0") ?? 0;
 		const tags = JSON.parse(formData.get("tags")?.toString() ?? "") as string[];
 
-		const totalCookTime = cookTimeHours * 60 + cookTimeMins;
-		const totalPrepTime = prepTimeHours * 60 + prepTimeMins;
+		const cookTimeHours = formData.get("cookTimeHours")
+			? Number(formData.get("cookTimeHours")?.toString())
+			: null;
+		const cookTimeMins = formData.get("cookTimeMins")
+			? Number(formData.get("cookTimeMins")?.toString())
+			: null;
+		const prepTimeHours = formData.get("prepTimeHours")
+			? Number(formData.get("prepTimeHours")?.toString())
+			: null;
+		const prepTimeMins = formData.get("prepTimeMins")
+			? Number(formData.get("prepTimeMins")?.toString())
+			: null;
+
+		//Dont want the cook/prep time to show up as 0 if the user has not explicity set it to 0,
+		//but if either the minutes or hours are set, assume the other is supposed to be 0
+		let totalCookTime = null;
+		let totalPrepTime = null;
+
+		if (cookTimeHours || cookTimeMins) {
+			totalCookTime = (cookTimeHours ?? 0) * 60 + (cookTimeMins ?? 0);
+		}
+		if (prepTimeMins || prepTimeHours) {
+			totalPrepTime = (prepTimeHours ?? 0) * 60 + (prepTimeMins ?? 0);
+		}
 
 		await prisma.recipe.create({
 			data: {
@@ -124,20 +137,32 @@ export async function updateRecipe(formData: FormData, recipeId: number) {
 		const notes = JSON.parse(
 			formData.get("notes")?.toString() ?? ""
 		) as string[];
-		const cookTimeHours = Number(
-			formData.get("cookTimeHours")?.toString() ?? "0"
-		);
-		const cookTimeMins =
-			Number(formData.get("cookTimeMins")?.toString() ?? "0") ?? 0;
-		const prepTimeHours =
-			Number(formData.get("prepTimeHours")?.toString() ?? "0") ?? 0;
-		const prepTimeMins =
-			Number(formData.get("prepTimeMins")?.toString() ?? "0") ?? 0;
 		const tags = JSON.parse(formData.get("tags")?.toString() ?? "") as string[];
 
-		//Convert time to time in minutes
-		const totalCookTime = cookTimeHours * 60 + cookTimeMins;
-		const totalPrepTime = prepTimeHours * 60 + prepTimeMins;
+		const cookTimeHours = formData.get("cookTimeHours")
+			? Number(formData.get("cookTimeHours")?.toString())
+			: null;
+		const cookTimeMins = formData.get("cookTimeMins")
+			? Number(formData.get("cookTimeMins")?.toString())
+			: null;
+		const prepTimeHours = formData.get("prepTimeHours")
+			? Number(formData.get("prepTimeHours")?.toString())
+			: null;
+		const prepTimeMins = formData.get("prepTimeMins")
+			? Number(formData.get("prepTimeMins")?.toString())
+			: null;
+
+		//Dont want the cook/prep time to show up as 0 if the user has not explicity set it to 0,
+		//but if either the minutes or hours are set, assume the other is supposed to be 0
+		let totalCookTime = null;
+		let totalPrepTime = null;
+
+		if (cookTimeHours || cookTimeMins) {
+			totalCookTime = (cookTimeHours ?? 0) * 60 + (cookTimeMins ?? 0);
+		}
+		if (prepTimeMins || prepTimeHours) {
+			totalPrepTime = (prepTimeHours ?? 0) * 60 + (prepTimeMins ?? 0);
+		}
 
 		const updatedRecipe = await prisma.recipe.update({
 			where: { id: recipeId },
