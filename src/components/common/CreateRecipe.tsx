@@ -27,7 +27,7 @@ import {
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
-import { redirect } from "next/navigation";
+import {useRouter } from "next/navigation";
 import { FullRecipe } from "@/lib/types";
 import {
 	cn,
@@ -263,6 +263,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 		{}
 	);
 
+	const router = useRouter();
 	const sendToServer = useCallback(
 		async (state: stateType, formData: globalThis.FormData | null) => {
 			if (formData) {
@@ -315,13 +316,13 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 			setTimeout(() => {
 				//If editing a recipe, redirect to the overview after editing, otherwise show all recipes
 				if (editRecipe) {
-					redirect(`/recipes/${editRecipe.id}`);
+					router.push(`/recipes/${editRecipe.id}/`);
 				} else {
-					redirect("\\");
+					router.push("\\");
 				}
 			}, 200);
 		}
-	}, [state, editRecipe]);
+	}, [state, editRecipe, router]);
 
 	useEffect(() => {
 		titleRef.current?.focus();
