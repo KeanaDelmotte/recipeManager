@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-// import styles from "./layout.module.css";
 import Navbar from "@/components/common/Navbar";
 import React from "react";
 import { auth } from "../lib/auth";
@@ -27,9 +26,10 @@ export default async function RootLayout({
 	children: React.ReactNode;
 }>) {
 	const session = await auth();
+
 	return (
 		<html lang="en">
-			<body>
+			<body className="h-svh flex flex-col">
 				<Navbar user={session?.user} />
 				{children}
 				<Toaster />

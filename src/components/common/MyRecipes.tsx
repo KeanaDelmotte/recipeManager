@@ -13,7 +13,7 @@ export default function MyRecipes({ recipes }: MyRecipesProps) {
 	return (
 		<div className="w-full h-full flex flex-col">
 			<div className="flex flex-row justify-between">
-				<h1 className="text-4xl font-bold mb-10">My Recipes</h1>
+				<h1 className="text-4xl font-semixbold mb-10">My Recipes</h1>
 				<Searchbar />
 			</div>
 			{recipes.length > 0 ? (

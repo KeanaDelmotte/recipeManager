@@ -8,6 +8,8 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getRecipes } from "@/lib/actions";
 import { PageProps } from "../../.next/types/app/page";
+import { LuSearchX } from "react-icons/lu";
+import { FaRegCircleXmark } from "react-icons/fa6";
 
 export default async function Home({ searchParams }: PageProps) {
 	const session = await auth();
@@ -16,9 +18,13 @@ export default async function Home({ searchParams }: PageProps) {
 
 	const recipesResponse = await getRecipes(search);
 
+	if (search != "" && recipesResponse.recipes?.length == 0) {
+		return <NoRecipesFound />;
+	}
+
 	if (recipesResponse.status == 200 && recipesResponse.recipes) {
 		return (
-			<div className={cn("!gap-0", styles.page)}>
+			<div className={cn("!gap-0 h-full", styles.page)}>
 				<main className={cn(styles.main, "w-full")}>
 					{!user && (
 						<div className="flex flex-col gap-3 items-center h-dvh justify-center">
@@ -44,10 +50,26 @@ export default async function Home({ searchParams }: PageProps) {
 			</div>
 		);
 	} else {
-		return (
-			<div>
-				<p>Could not fetch recipes</p>
-			</div>
-		);
+		return <CouldNotFetchRecipes />;
 	}
+}
+
+function CouldNotFetchRecipes() {
+	return (
+		<div className="grow w-full flex flex-col justify-center items-center gap-3">
+			<FaRegCircleXmark size={100} />
+			<p className="font-semibold text-xl">Error fetching recipes</p>
+		</div>
+	);
+}
+
+function NoRecipesFound() {
+	return (
+		<div className="grow w-full flex flex-col justify-center items-center gap-3">
+			<LuSearchX size={100} />
+			<p className="font-semibold text-xl">
+				{"No recipes found that match your search"}
+			</p>
+		</div>
+	);
 }
