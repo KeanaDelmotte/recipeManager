@@ -50,6 +50,24 @@ interface RecipeOverviewProps {
 	tags: Tag[];
 }
 
+export function showSuccessToast(title: string, message: string) {
+	toast.success(title, {
+		description: message,
+		icon: <FaCircleCheck className="text-secondary w-5 h-5" />,
+		className:
+			"border border-green-400 bg-green-50 text-green-700 shadow-lg rounded-xl",
+	});
+}
+
+export function showErrorToast(title: string, message: string) {
+	toast.error(title, {
+		description: message,
+		icon: <FaCircleXmark className="text-red-500 w-5 h-5" />,
+		className:
+			"border border-red-400 bg-red-50 text-red-700 shadow-lg rounded-xl",
+	});
+}
+
 export default function RecipeOverview({
 	recipe,
 	ingredients,
@@ -77,32 +95,28 @@ export default function RecipeOverview({
 	useEffect(() => {
 		if (deleteResult?.status == 200) {
 			router.push("/");
-			toast.success("Recipe deleted", {
-				description: deleteResult.deletedRecipe?.title
+			showSuccessToast(
+				"Recipe deleted",
+				deleteResult.deletedRecipe?.title
 					? `The recipe "${deleteResult.deletedRecipe?.title}" was deleted successfully.`
-					: "The recipe was deleted successfully.",
-				icon: <FaCircleCheck className="text-secondary w-5 h-5" />,
-				className:
-					"border border-green-400 bg-green-50 text-green-700 shadow-lg rounded-xl",
-			});
+					: "The recipe was deleted successfully."
+			);
 		} else if (deleteResult?.error != null || error) {
+			//If it is generic server. Just ask to try again. Otherwise show more
+			//detailed error message
 			let description = "Please try again.";
 
 			if (deleteResult?.status != 500 && deleteResult?.error) {
 				description = deleteResult?.error;
 			}
-
-			toast.error("Delete failed", {
-				description:
-					`The recipe ${
-						deleteResult?.deletedRecipe?.title
-							? '"' + deleteResult.deletedRecipe?.title + '"'
-							: ""
-					}  could not be deleted. ` + description,
-				icon: <FaCircleXmark className="text-red-500 w-5 h-5" />,
-				className:
-					"border border-red-400 bg-red-50 text-red-700 shadow-lg rounded-xl",
-			});
+			showErrorToast(
+				"Delete failed",
+				`The recipe ${
+					deleteResult?.deletedRecipe?.title
+						? '"' + deleteResult.deletedRecipe?.title + '"'
+						: ""
+				}  could not be deleted. ` + description
+			);
 		}
 	}, [deleteResult, router, recipe.title, error]);
 
@@ -123,9 +137,6 @@ export default function RecipeOverview({
 								className="cursor-pointer"
 								onClick={() => {
 									deleteRecipeWithID(recipe.id);
-									// if (success?.status == 200) {
-									// 	router.push("/");
-									// }
 								}}
 								disabled={isPending}
 							>
