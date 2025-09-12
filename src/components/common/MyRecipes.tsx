@@ -1,5 +1,4 @@
 import RecipeCard from "./RecipeCard";
-import Searchbar from "./SearchBar";
 import Styles from "./MyRecipes.module.css";
 import { RecipeWithIngredients } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -12,10 +11,6 @@ interface MyRecipesProps {
 export default function MyRecipes({ recipes }: MyRecipesProps) {
 	return (
 		<div className="w-full h-full flex flex-col">
-			<div className="flex flex-row justify-between">
-				<h1 className="text-4xl font-semixbold mb-10">My Recipes</h1>
-				<Searchbar />
-			</div>
 			{recipes.length > 0 ? (
 				<ul className={cn("flex flex-wrap", Styles.myRecipes)}>
 					{recipes &&

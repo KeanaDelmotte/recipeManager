@@ -10,6 +10,7 @@ import { getRecipes } from "@/lib/actions";
 import { PageProps } from "../../.next/types/app/page";
 import { LuSearchX } from "react-icons/lu";
 import { FaRegCircleXmark } from "react-icons/fa6";
+import Searchbar from "@/components/common/SearchBar";
 
 export default async function Home({ searchParams }: PageProps) {
 	const session = await auth();
@@ -17,10 +18,6 @@ export default async function Home({ searchParams }: PageProps) {
 	const search = (await searchParams)?.search;
 
 	const recipesResponse = await getRecipes(search);
-
-	if (search != "" && recipesResponse.recipes?.length == 0) {
-		return <NoRecipesFound />;
-	}
 
 	if (recipesResponse.status == 200 && recipesResponse.recipes) {
 		return (
@@ -36,7 +33,15 @@ export default async function Home({ searchParams }: PageProps) {
 					)}
 					{user && (
 						<div className="w-full h-full flex flex-col gap-4">
-							<MyRecipes recipes={recipesResponse.recipes} />
+							<div className="flex flex-row justify-between">
+								<h1 className="text-4xl font-semixbold mb-10">My Recipes</h1>
+								<Searchbar />
+							</div>
+							{recipesResponse.recipes.length > 0 ? (
+								<MyRecipes recipes={recipesResponse.recipes} />
+							) : (
+								<NoRecipesFound />
+							)}
 							<Button asChild className="w-fit z-10 fixed right-5 bottom-5">
 								<Link href="/createrecipe">
 									<FaPlus />
