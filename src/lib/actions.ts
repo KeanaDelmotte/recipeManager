@@ -306,11 +306,21 @@ export async function deleteRecipe(id: number) {
 
 export async function getRecipes(filter: string) {
 	try {
+		const session = await auth();
+		const user = session?.user;
+
+		if (!user) {
+			return {
+				error: "You must be signed in to view your recipes.",
+				status: 401,
+			};
+		}
 		const filteredRecipes = await prisma.recipe.findMany({
 			where: {
 				title: {
 					contains: filter,
 				},
+				userId: user.id,
 			},
 			include: {
 				ingredients: {
