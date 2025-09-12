@@ -19,18 +19,22 @@ export default async function Home({ searchParams }: PageProps) {
 
 	const recipesResponse = await getRecipes(search);
 
+	if (!user) {
+		return (
+			<div className="flex flex-col gap-3 items-center h-dvh justify-center">
+				<p className="text-xl font-semibold">
+					{"Looks like you're not signed in"}
+				</p>
+				<Button asChild>
+					<Link href="/api/auth/signin">Sign In</Link>
+				</Button>
+			</div>
+		);
+	}
 	if (recipesResponse.status == 200 && recipesResponse.recipes) {
 		return (
 			<div className={cn("!gap-0 h-full", styles.page)}>
 				<main className={cn(styles.main, "w-full")}>
-					{!user && (
-						<div className="flex flex-col gap-3 items-center h-dvh justify-center">
-							<p>{"Looks like you're not signed in"}</p>
-							<Button asChild>
-								<Link href="/api/auth/signin">Sign In</Link>
-							</Button>
-						</div>
-					)}
 					{user && (
 						<div className="w-full h-full flex flex-col gap-4">
 							<div className="flex flex-row justify-between">
