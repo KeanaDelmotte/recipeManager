@@ -21,46 +21,50 @@ export default async function Home({ searchParams }: PageProps) {
 
 	if (!user) {
 		return (
-			<div className="flex flex-col gap-3 items-center h-dvh justify-center">
-				<p className="text-xl font-semibold">
-					{"Looks like you're not signed in"}
-				</p>
-				<Button asChild>
-					<Link href="/api/auth/signin">Sign In</Link>
-				</Button>
+			<div className={cn(styles.page)}>
+				<h1 className="text-4xl font-semixbold mb-10 self-start text-start w-full mt-3">
+					My Recipes
+				</h1>
+				<div className="flex flex-col gap-3 items-center h-dvh justify-center">
+					<p className="text-xl font-semibold">
+						{"Looks like you're not signed in"}
+					</p>
+					<Button asChild>
+						<Link href="/api/auth/signin">Sign In</Link>
+					</Button>
+				</div>
 			</div>
 		);
 	}
-	if (recipesResponse.status == 200 && recipesResponse.recipes) {
-		return (
-			<div className={cn("!gap-0 h-full", styles.page)}>
-				<main className={cn(styles.main, "w-full")}>
-					{user && (
-						<div className="w-full h-full flex flex-col gap-4">
-							<div className="flex flex-row justify-between">
-								<h1 className="text-4xl font-semixbold mb-10">My Recipes</h1>
-								<Searchbar />
-							</div>
-							{recipesResponse.recipes.length > 0 ? (
-								<MyRecipes recipes={recipesResponse.recipes} />
-							) : (
-								<NoRecipesFound />
-							)}
-							<Button asChild className="w-fit z-10 fixed right-5 bottom-5">
-								<Link href="/createrecipe">
-									<FaPlus />
-									Add Recipe
-								</Link>
-							</Button>
-						</div>
-					)}
-				</main>
-				<footer className={styles.footer} />
-			</div>
-		);
-	} else {
+	if (user && recipesResponse.status != 200) {
 		return <CouldNotFetchRecipes />;
 	}
+	return (
+		<div className={cn("!gap-0 h-full", styles.page)}>
+			<main className={cn(styles.main, "w-full")}>
+				<div className="w-full h-full flex flex-col gap-4">
+					<div className="flex flex-row justify-between">
+						<h1 className="text-4xl font-semixbold mb-10">My Recipes</h1>
+						<Searchbar />
+					</div>
+					{search == undefined &&
+					recipesResponse.recipes &&
+					recipesResponse.recipes.length > 0 ? (
+						<MyRecipes recipes={recipesResponse.recipes} />
+					) : (
+						<NoRecipesFound />
+					)}
+					<Button asChild className="w-fit z-10 fixed right-5 bottom-5">
+						<Link href="/createrecipe">
+							<FaPlus />
+							Add Recipe
+						</Link>
+					</Button>
+				</div>
+			</main>
+			<footer className={styles.footer} />
+		</div>
+	);
 }
 
 function CouldNotFetchRecipes() {
