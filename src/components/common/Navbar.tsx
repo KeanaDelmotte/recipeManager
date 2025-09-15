@@ -3,8 +3,9 @@ import { User } from "next-auth";
 import { signOut, signIn } from "next-auth/react";
 import Image from "next/image";
 import React, { useState, useEffect, useRef } from "react";
-import { FaUser } from "react-icons/fa6";
+import { FaUser, FaX } from "react-icons/fa6";
 import Link from "next/link";
+import { Button } from "../ui/button";
 
 interface NavbarProps {
 	user: User | undefined;
@@ -31,15 +32,15 @@ export default function Navbar({ user }: NavbarProps) {
 		};
 	}, [showMenu]);
 	return (
-		<div className="sticky top-0 z-50 bg-gray-900 flex flex-row justify-between p-5">
+		<div className="sticky top-0 z-50 bg-gray-900 flex flex-row justify-between p-5 ">
 			{/* Right Side - Home Link */}
 			<Link href="/" className="text-white text-2xl">
 				Recipe Manager
 			</Link>
 			{/* Left Side - Login/User */}
-			<div>
+			<div className="relative">
 				{user && (
-					<div className="flex">
+					<div className="flex justify-end">
 						<Image
 							src={user.image ?? "public/default-user.svg"}
 							alt="user image"
@@ -48,7 +49,7 @@ export default function Navbar({ user }: NavbarProps) {
 							height={30}
 							onClick={() => setShowMenu(true)}
 						/>
-						<p className="text-white ml-3">{`Welcome, ${user.name}`}</p>
+						{/* <p className="text-white ml-3">{`Welcome, ${user.name}`}</p> */}
 					</div>
 				)}
 				{!user && (
@@ -78,16 +79,28 @@ interface UserMenuProps {
 function UserMenu({ user, ref, dismiss }: UserMenuProps) {
 	return (
 		<div
-			className="flex flex-col p-1 absolute right-0 z-10 bg-black border border-black"
+			className="absolute right-0 flex flex-col items-start z-10 bg-gray-900 border border-black mt-7 rounded-xl w-100"
 			ref={ref}
 		>
+			<div className="w-full flex justify-between items-center p-3 border-b-2 border-gray-600">
+				{user && <p className="text-white">{`Welcome, ${user.name}`}</p>}
+				<Button
+					variant="ghost"
+					className="hover:bg-gray-700"
+					onClick={() => {
+						dismiss();
+					}}
+				>
+					<FaX className="text-white" />
+				</Button>
+			</div>
 			{user && (
 				<button
 					onClick={async () => {
 						await signOut();
 						dismiss();
 					}}
-					className="text-white cursor-pointer"
+					className="text-white cursor-pointer p-3 hover:bg-gray-700 w-full last:rounded-b-xl text-start"
 				>
 					Sign Out
 				</button>
@@ -98,7 +111,7 @@ function UserMenu({ user, ref, dismiss }: UserMenuProps) {
 						await signIn();
 						dismiss();
 					}}
-					className="text-white cursor-pointer"
+					className="text-white cursor-pointer p-3 hover:bg-gray-700 w-full last:rounded-b-xl text-start"
 				>
 					Sign In
 				</button>
