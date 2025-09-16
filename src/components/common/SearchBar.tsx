@@ -3,11 +3,12 @@ import { FaMagnifyingGlass, FaX } from "react-icons/fa6";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Searchbar() {
 	const [searchQ, setSearchQ] = useState("");
 	const router = useRouter();
+	const currentDir = usePathname();
 
 	function onSearch(searchStr: string) {
 		const params = new URLSearchParams(window.location.search);
@@ -16,7 +17,7 @@ export default function Searchbar() {
 		} else {
 			params.delete("search");
 		}
-		router.push(`/?${params.toString()}`);
+		router.push(`${currentDir}?${params.toString()}`);
 	}
 
 	return (
@@ -48,6 +49,7 @@ export default function Searchbar() {
 					variant="ghost"
 					onClick={() => {
 						setSearchQ("");
+						router.push(currentDir);
 					}}
 					className="cursor-pointer col-start-1 row-start-1 justify-self-end w-fit rounded-s-none scale-90 hover:scale-95"
 				>
