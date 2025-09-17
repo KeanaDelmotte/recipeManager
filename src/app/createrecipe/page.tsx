@@ -1,15 +1,13 @@
-
 import CreateRecipe from "@/components/common/CreateRecipe";
+import UnauthenticatedView from "@/components/common/UnauthenticatedView";
 import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
 export default async function NewRecipePage() {
-  const session = await auth()
+	const session = await auth();
 
+	if (!session?.user?.id) {
+		return <UnauthenticatedView />;
+	}
 
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
-
-  return <CreateRecipe userId={session.user.id} />;
+	return <CreateRecipe userId={session.user.id} />;
 }

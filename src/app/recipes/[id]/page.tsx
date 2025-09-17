@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageProps } from "../../../../.next/types/app/page";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import UnauthenticatedView from "@/components/common/UnauthenticatedView";
 
 export default async function Recipe({ params, searchParams }: PageProps) {
 	const editMode = (await searchParams).edit;
@@ -18,6 +19,10 @@ export default async function Recipe({ params, searchParams }: PageProps) {
 			tags: true,
 		},
 	});
+
+	if (!user?.id) {
+		return <UnauthenticatedView />;
+	}
 
 	if (user?.id && editMode && recipe) {
 		return (
@@ -43,7 +48,6 @@ export default async function Recipe({ params, searchParams }: PageProps) {
 	);
 }
 
-//todo center this
 function RecipeNotFound() {
 	return (
 		<div className="h-full w-full flex flex-col justify-center items-center gap-3">

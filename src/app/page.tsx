@@ -11,6 +11,7 @@ import { PageProps } from "../../.next/types/app/page";
 import { LuSearchX } from "react-icons/lu";
 import { FaRegCircleXmark } from "react-icons/fa6";
 import Searchbar from "@/components/common/SearchBar";
+import UnauthenticatedView from "@/components/common/UnauthenticatedView";
 
 export default async function Home({ searchParams }: PageProps) {
 	const session = await auth();
@@ -20,22 +21,9 @@ export default async function Home({ searchParams }: PageProps) {
 	const recipesResponse = await getRecipes(search);
 
 	if (!user) {
-		return (
-			<div className={cn(styles.page)}>
-				<h1 className="text-4xl font-semixbold mb-10 self-start text-start w-full mt-3">
-					My Recipes
-				</h1>
-				<div className="flex flex-col gap-3 items-center h-dvh justify-center">
-					<p className="text-xl font-semibold">
-						{"Looks like you're not signed in"}
-					</p>
-					<Button asChild>
-						<Link href="/api/auth/signin">Sign In</Link>
-					</Button>
-				</div>
-			</div>
-		);
+		return <UnauthenticatedView />;
 	}
+
 	if (user && recipesResponse.status != 200) {
 		return <CouldNotFetchRecipes />;
 	}
