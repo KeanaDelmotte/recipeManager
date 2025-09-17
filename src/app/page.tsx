@@ -35,7 +35,11 @@ export default async function Home({ searchParams }: PageProps) {
 						<h1 className="text-4xl font-semixbold mb-10">My Recipes</h1>
 						<Searchbar />
 					</div>
-					{search == undefined && recipesResponse.recipes ? (
+					{/* If either have no recipes created yet, or have search results, show recipes view, otherwise show no
+            search results view or error view
+             */}
+					{(search == undefined && recipesResponse.recipes?.length == 0) ||
+					(recipesResponse.recipes && recipesResponse.recipes?.length > 0) ? (
 						<MyRecipes recipes={recipesResponse.recipes} />
 					) : (
 						<NoRecipesFound />
