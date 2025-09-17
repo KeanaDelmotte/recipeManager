@@ -24,7 +24,7 @@ export default async function Recipe({ params, searchParams }: PageProps) {
 		return <UnauthenticatedView />;
 	}
 
-	if (user?.id && editMode && recipe) {
+	if (user?.id && editMode === "true" && recipe) {
 		return (
 			<div>
 				<CreateRecipe userId={user.id} editRecipe={recipe} />
