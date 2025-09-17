@@ -27,7 +27,7 @@ import {
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Textarea } from "../../components/ui/textarea";
-import {useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { FullRecipe } from "@/lib/types";
 import {
 	cn,
@@ -982,9 +982,12 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 							variant="destructive"
 							onClick={() => {
 								resetForm();
+								if (editRecipe) {
+									setFormDataToRecipe(setForm, editRecipe);
+								}
 							}}
 						>
-							Discard
+							{editRecipe ? "Revert" : "Clear"}
 						</Button>
 						<Button
 							disabled={
