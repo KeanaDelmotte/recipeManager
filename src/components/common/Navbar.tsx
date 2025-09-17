@@ -83,7 +83,11 @@ function UserMenu({ user, ref, dismiss }: UserMenuProps) {
 			ref={ref}
 		>
 			<div className="w-full flex justify-between items-center p-3 border-b-2 border-gray-600">
-				{user && <p className="text-white">{`Welcome, ${user.name}`}</p>}
+				{user && (
+					<p className="text-white capitalize">{`Welcome, ${
+						user.name?.split(" ")[0]
+					}`}</p>
+				)}
 				<Button
 					variant="ghost"
 					className="hover:bg-gray-700"
