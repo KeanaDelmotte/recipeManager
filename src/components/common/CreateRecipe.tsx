@@ -1,6 +1,6 @@
 "use client";
 
-import { createRecipe, updateRecipe } from "@/lib/actions";
+import { createRecipe, updateRecipe, upload } from "@/lib/actions";
 import Form from "next/form";
 import {
 	useState,
@@ -22,6 +22,7 @@ import {
 	FaPlus,
 	FaRegTrashCan,
 	FaTriangleExclamation,
+	FaX,
 	FaXmark,
 } from "react-icons/fa6";
 import { Input } from "../../components/ui/input";
@@ -36,6 +37,8 @@ import {
 } from "@/lib/utils";
 import Link from "next/link";
 import LoadingView from "./LoadingView";
+import Spinner from "../ui/spinner";
+import { showErrorToast } from "./RecipeOverview";
 
 export interface InputIngredient {
 	id: string;
@@ -78,6 +81,7 @@ function setFormDataToRecipe(
 		cookTimeMins: `${cookTimeHoursAndMinutes.minutes}`,
 		prepTimeHours: `${prepTimeHoursAndMinutes.hours}`,
 		prepTimeMins: `${prepTimeHoursAndMinutes.minutes}`,
+		filePath: recipe.imageUrl ?? "",
 	}));
 }
 
@@ -173,6 +177,7 @@ const schema = z.object({
 		.transform((val) =>
 			val === undefined || val === "" ? undefined : Number(val)
 		),
+	filePath: z.string().optional(),
 });
 
 type FormData = {
@@ -193,6 +198,7 @@ type FormData = {
 	cookTimeHours: string;
 	prepTimeMins: string;
 	prepTimeHours: string;
+	filePath: string;
 };
 
 interface CreateRecipeProps {
@@ -251,7 +257,9 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 		cookTimeMins: "",
 		prepTimeHours: "",
 		prepTimeMins: "",
+		filePath: "",
 	});
+	const imgRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		if (editRecipe) {
@@ -262,6 +270,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 	const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
 		{}
 	);
+	const [fileUploadBusy, setFileUploadBusy] = useState(false);
 
 	const router = useRouter();
 	const sendToServer = useCallback(
@@ -271,6 +280,8 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 				formData.append("steps", JSON.stringify(steps));
 				formData.append("notes", JSON.stringify(notes));
 				formData.append("tags", JSON.stringify(tags));
+				console.log(form.filePath, "filepath");
+				formData.append("filePath", form.filePath);
 
 				let status = 0;
 				let message = "";
@@ -302,7 +313,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 				formData,
 			};
 		},
-		[editRecipe, ingredients, notes, tags, steps]
+		[editRecipe, ingredients, notes, tags, steps, form.filePath]
 	);
 
 	const [state, formAction, isPending] = useActionState<
@@ -385,6 +396,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 			cookTimeMins: "",
 			prepTimeHours: "",
 			prepTimeMins: "",
+			filePath: "",
 		});
 
 		setIngredients([]);
@@ -392,6 +404,10 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 		setTags([]);
 		setNotes([]);
 		setErrors({});
+
+		if (imgRef.current) {
+			imgRef.current.value = "";
+		}
 	};
 
 	const debouncedTimers = useRef<
@@ -950,31 +966,78 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 							))}
 						</div>
 					</div>
-					{/*TODO*/
-					/* Image Section */
-					/*https://dev.to/drprime01/how-to-validate-a-file-input-with-zod-5739*/}
-					{/* <input
-				type="file"
-				name="file"
-				onChange={async (e) => {
-					setFileUploadBusy(true);
-					if (e.target.files) {
-						const formData = new FormData();
-						Object.values(e.target.files).forEach((file) => {
-							formData.append("file", file);
-						});
+					{/* Image Section */}
+					<div className="flex flex-row items-center gap-3">
+						<Input
+							ref={imgRef}
+							type="file"
+							className={cn(
+								"cursor-pointer",
+								{ "border-2 border-secondary": form.filePath != "" },
+								{ "border-2 border-red-400": errors.filePath }
+							)}
+							onChange={async (e) => {
+								const file = e.target.files?.[0];
+								if (file) {
+									setFileUploadBusy(true);
+									//make max file size 1mb smaller than max body size so theres 1mb for the rest
+									const maxSize = 4 * 1024 * 1024;
 
-						const response = await upload(formData);
+									if (file.size > maxSize) {
+										showErrorToast(
+											"Could not upload image",
+											"File is too large! Max size is 4 MB."
+										);
+										setErrors((prev) => ({
+											...prev,
+											filePath: "File size too large",
+										}));
+										e.target.value = "";
+										setFileUploadBusy(false);
+										return;
+									}
 
-						const result = await response?.json();
-						if (result.success) {
-							setFileUploadBusy(false);
-						} else {
-              setErrors((prev) => ({...prev, file: "Failed to upload image"}))
-						}
-					}
-				}}
-			/> */}
+									const formData = new FormData();
+									formData.append("file", file);
+
+									const response = await upload(formData);
+
+									if (response.status == 200 && response.path) {
+										setFileUploadBusy(false);
+										setForm((prev) => ({ ...prev, filePath: response.path }));
+										setErrors((prev) => ({
+											...prev,
+											filePath: undefined,
+										}));
+									} else {
+										setErrors((prev) => ({
+											...prev,
+											filePath: "Failed to upload image",
+										}));
+									}
+								}
+							}}
+						/>
+						{form.filePath != "" && (
+							<Button
+								variant="secondary"
+								className="size-8"
+								onClick={() => {
+									if (imgRef.current) {
+										form.filePath = "";
+										imgRef.current.value = "";
+                    setErrors((prev) => ({
+											...prev,
+											filePath: undefined,
+										}));
+									}
+								}}
+							>
+								<FaX />
+							</Button>
+						)}
+						{fileUploadBusy && <Spinner />}
+					</div>
 					{/* Action Buttons Section */}
 					<div className="col-span-2 justify-self-center flex gap-3">
 						<Button
@@ -991,6 +1054,7 @@ export default function CreateRecipe({ editRecipe }: CreateRecipeProps) {
 						</Button>
 						<Button
 							disabled={
+                form.title == "" ||
 								Object.values(errors).find((v) => v != undefined) !=
 									undefined ||
 								(state.success == false && state.status != 0)

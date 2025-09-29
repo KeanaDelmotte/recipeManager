@@ -4,6 +4,8 @@ import { prisma } from "./prisma";
 import { InputIngredient } from "@/components/common/CreateRecipe";
 import { auth } from "./auth";
 import { isPrismaError } from "./utils";
+import path from "path";
+import fs from "fs";
 
 export async function createRecipe(formData: FormData) {
 	try {
@@ -17,7 +19,7 @@ export async function createRecipe(formData: FormData) {
 		const title = formData.get("title")?.toString();
 		const description = formData.get("description")?.toString();
 		const servings = parseFloat(formData.get("servings")?.toString() ?? "");
-		const imageUrl = formData.get("file")?.toString();
+		const imageUrl = formData.get("filePath")?.toString();
 		const steps = JSON.parse(
 			formData.get("steps")?.toString() ?? ""
 		) as string[];
@@ -234,30 +236,29 @@ export async function updateRecipe(formData: FormData, recipeId: number) {
 	}
 }
 
-// export async function upload(formData: FormData) {
-// 	try {
-// 		const file = (formData.get("file") as Blob) || null;
-// 		const uploadDir = path.resolve(
-// 			process.env.ROOT_PATH ?? "",
-// 			"public/uploads"
-// 		);
-// 		if (file) {
-// 			const buffer = Buffer.from(await file.arrayBuffer());
-// 			if (!fs.existsSync(uploadDir)) {
-// 				fs.mkdirSync(uploadDir);
-// 			}
+export async function upload(formData: FormData) {
+	try {
+		const file = (formData.get("file") as Blob) || null;
+		const fileName = (formData.get("file") as File).name;
+		const uploadDir = path.resolve(
+			process.env.ROOT_PATH ?? "",
+			"public/uploads"
+		);
+		if (file) {
+			const buffer = Buffer.from(await file.arrayBuffer());
+			if (!fs.existsSync(uploadDir)) {
+				fs.mkdirSync(uploadDir);
+			}
 
-// 			fs.writeFileSync(
-// 				path.resolve(uploadDir, (formData.get("file") as File).name),
-// 				buffer
-// 			);
-// 		} else {
-// 			return {  };
-// 		}
-// 	} catch (e) {
-// 		return { , message: e };
-// 	}
-// }
+			fs.writeFileSync(path.resolve(uploadDir, fileName), buffer);
+			return { status: 200, path: `/uploads/${fileName}` };
+		} else {
+			return { status: 400 };
+		}
+	} catch (e) {
+		return { error: e, status: 500 };
+	}
+}
 
 export async function deleteRecipe(id: number) {
 	try {

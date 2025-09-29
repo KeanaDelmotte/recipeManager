@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent } from "../ui/card";
-import Image from "next/image";
+// import Image from "next/image";
 import { FaClock, FaImage, FaPen, FaBookOpen, FaTrash } from "react-icons/fa6";
 import { cn, timeInMinutesToReadable } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -10,6 +10,7 @@ import { useState } from "react";
 import { deleteRecipe } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { showErrorToast, showSuccessToast } from "./RecipeOverview";
+import Image from "next/image";
 interface RecipeCardProps {
 	id: number;
 	imageURL: string;
@@ -38,6 +39,7 @@ export default function RecipeCard({
 }: RecipeCardProps) {
 	const [showPopup, setShowPopup] = useState(false);
 	const router = useRouter();
+  
 	return (
 		<Card
 			className={cn(
@@ -48,19 +50,25 @@ export default function RecipeCard({
 			{/* Image Section */}
 			<div className="relative w-full h-28 bg-gray-100 flex items-center justify-center flex-shrink-0">
 				{imageURL ? (
-					<Image src={imageURL} alt={title} fill className="object-cover" />
+					<Image
+						src={imageURL}
+						alt={title}
+						fill
+						className="object-cover"
+            quality={25}
+					/>
 				) : (
 					<FaImage className="text-gray-400" size={48} />
 				)}
 				<Button
 					type="button"
-					variant="ghost"
+					variant="secondary"
 					className="absolute top-2 right-2 z-10"
 					onClick={() => {
 						setShowPopup(true);
 					}}
 				>
-					<FaTrash className="text-gray-700" />
+					<FaTrash className="text-white" />
 				</Button>
 			</div>
 
