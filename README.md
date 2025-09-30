@@ -20,7 +20,8 @@ A full-stack recipe management app built with [Next.js](https://nextjs.org), Pri
 
 2. **Set up your environment variables:**
 
-   - Copy `.env.example` to `.env` and fill in the required values (database URL, etc).
+   - **Google OAuth credentials are required for login.** You must provide `GOOGLE_ID` and `GOOGLE_SECRET` in your `.env` file. You can obtain these from the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+   - **A NextAuth secret is also required.** Set `NEXTAUTH_SECRET` in your `.env` file to a long, random string (you can generate one with `openssl rand -base64 32`).
 
 3. **Set up the database:**
 
@@ -87,14 +88,8 @@ I plan to update the app with more features as I have time. Stay tuned for impro
 
 ---
 
-## 🤝 Contributing
-
-Pull requests and issues are welcome!
-
----
-
 ## 📄 License
 
-MIT
+No License
 
 ---
