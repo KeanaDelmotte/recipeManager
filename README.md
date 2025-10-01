@@ -64,7 +64,7 @@ A full-stack recipe management app built with [Next.js](https://nextjs.org), Pri
 - [TypeScript](https://www.typescriptlang.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [React Icons](https://react-icons.github.io/react-icons/)
-- [Vercel](https://vercel.com/) (for deployment)
+- [Netlify](https://www.netlify.com/) (for deployment)
 
 ---
 
@@ -76,9 +76,9 @@ A full-stack recipe management app built with [Next.js](https://nextjs.org), Pri
 
 ---
 
-## 🚀 Deploy
+## 🚀 Deployment
 
-Deploy your app instantly on [Vercel](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+Deploy your app instantly on [Netlify](https://app.netlify.com/start).
 
 ---
 
